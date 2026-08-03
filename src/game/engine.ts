@@ -1,46 +1,30 @@
 import type { GameData, InputState, Player, Enemy, Particle, Star, Bullet, PowerUpType, EnemyType } from './types';
-import { loadSkin, recordRun } from './progress';
-import {
-  CANVAS_W,
-  CANVAS_H,
-  PLAYER,
-  STARS,
-  PARTICLES,
-  WAVES,
-  SPAWNING,
-  COMBO,
-  SCREEN,
-  POWER_UPS,
-  BOSS,
-  BULLETS,
-  ENEMY_BULLETS,
-  STORAGE_KEYS,
-} from './constants';
 
-export { CANVAS_W, CANVAS_H };
+export const CANVAS_W = 480;
+export const CANVAS_H = 720;
 
 export const COLORS = {
-  bg: '#0a0908',
-  player: '#ff7a1a',
-  playerGlow: '#ff3d00',
-  bullet: '#fff4d6',
-  bulletGlow: '#ffb703',
-  missile: '#ffd166',
-  enemy1: '#e5484d',
-  enemy2: '#8b7ff0',
-  enemy3: '#d97706',
-  enemy4: '#5eead4',
-  kamikaze: '#ff2d20',
-  boss: '#f43f5e',
-  explosion: ['#ff7a1a', '#ffd166', '#fff4d6', '#e5484d', '#ff3d00'],
-  shield: '#7dd3fc',
-  powerSpread: '#e5484d',
-  powerRapid: '#ffb703',
-  powerShield: '#7dd3fc',
-  powerBomb: '#ff7a1a',
-  powerHealth: '#5eead4',
-  powerMissile: '#ffd166',
-  hud: '#ffb703',
+  bg: '#070712',
+  player: '#00e5ff',
+  playerGlow: '#00b8d4',
+  bullet: '#ffeb3b',
+  bulletGlow: '#ffc107',
+  missile: '#ffab40',
+  enemy1: '#ff4081',
+  enemy2: '#7c4dff',
+  enemy3: '#ff6e40',
+  enemy4: '#69f0ae',
+  kamikaze: '#ff1744',
+  boss: '#d500f9',
+  explosion: ['#ff4081', '#ffab40', '#ffeb3b', '#ffffff', '#ff6e40'],
+  shield: '#40c4ff',
+  powerSpread: '#ff4081',
+  powerRapid: '#ffeb3b',
+  powerShield: '#40c4ff',
+  powerBomb: '#ff6e40',
+  powerHealth: '#76ff03',
+  powerMissile: '#ff9100',
+  hud: '#00e5ff',
 };
 
 export const POWERUP_COLORS: Record<PowerUpType, string> = {
@@ -52,44 +36,10 @@ export const POWERUP_COLORS: Record<PowerUpType, string> = {
   missile: COLORS.powerMissile,
 };
 
-// ---------- deterministic RNG (used by the daily challenge) ----------
-let rngState = 0;
-let rngSeeded = false;
-
-/** Pass a seed for a reproducible run, or null for normal randomness. */
-export function setSeed(seed: number | null) {
-  if (seed === null) {
-    rngSeeded = false;
-    return;
-  }
-  rngSeeded = true;
-  rngState = (seed >>> 0) || 1;
-}
-
-/** mulberry32 when seeded, Math.random otherwise. */
-export function rnd(): number {
-  if (!rngSeeded) return Math.random();
-  rngState = (rngState + 0x6d2b79f5) >>> 0;
-  let t = rngState;
-  t = Math.imul(t ^ (t >>> 15), t | 1);
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-}
-
-export function seedFromString(text: string): number {
-  let h = 2166136261;
-  for (let i = 0; i < text.length; i++) {
-    h ^= text.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
 // ---------- storage ----------
-
 export function loadHighScores(): number[] {
   try {
-    const data = localStorage.getItem(STORAGE_KEYS.highScores);
+    const data = localStorage.getItem('novaBlasterHighScores');
     if (data) return JSON.parse(data).slice(0, 10);
   } catch { /* ignore */ }
   return [];
@@ -97,13 +47,13 @@ export function loadHighScores(): number[] {
 
 export function saveHighScores(scores: number[]) {
   try {
-    localStorage.setItem(STORAGE_KEYS.highScores, JSON.stringify(scores.slice(0, 10)));
+    localStorage.setItem('novaBlasterHighScores', JSON.stringify(scores.slice(0, 10)));
   } catch { /* ignore */ }
 }
 
 // ---------- helpers ----------
 function swapRemove<T>(arr: T[], i: number) {
-  arr[i] = arr[arr.length - 1]!;
+  arr[i] = arr[arr.length - 1];
   arr.pop();
 }
 
@@ -114,14 +64,14 @@ function rectsOverlap(ax: number, ay: number, aw: number, ah: number, bx: number
 // ---------- factories ----------
 function createPlayer(): Player {
   return {
-    x: PLAYER.startX,
-    y: PLAYER.startY,
-    width: PLAYER.width,
-    height: PLAYER.height,
-    speed: PLAYER.speed,
-    hp: PLAYER.startHp,
-    maxHp: PLAYER.maxHp,
-    fireRate: PLAYER.fireRate,
+    x: CANVAS_W / 2,
+    y: CANVAS_H - 100,
+    width: 32,
+    height: 36,
+    speed: 5,
+    hp: 3,
+    maxHp: 5,
+    fireRate: 9,
     fireTimer: 0,
     spreadLevel: 0,
     rapidTimer: 0,
@@ -134,13 +84,13 @@ function createPlayer(): Player {
 
 function createStars(): Star[] {
   const stars: Star[] = [];
-  for (let i = 0; i < STARS.count; i++) {
+  for (let i = 0; i < 100; i++) {
     stars.push({
-      x: rnd() * CANVAS_W,
-      y: rnd() * CANVAS_H,
-      speed: STARS.minSpeed + rnd() * (STARS.maxSpeed - STARS.minSpeed),
-      size: STARS.minSize + rnd() * (STARS.maxSize - STARS.minSize),
-      brightness: 0.3 + rnd() * 0.7,
+      x: Math.random() * CANVAS_W,
+      y: Math.random() * CANVAS_H,
+      speed: 0.2 + Math.random() * 1.8,
+      size: 0.5 + Math.random() * 2,
+      brightness: 0.3 + Math.random() * 0.7,
     });
   }
   return stars;
@@ -149,8 +99,6 @@ function createStars(): Star[] {
 export function createGameData(): GameData {
   return {
     state: 'menu',
-    mode: 'classic',
-    skin: loadSkin(),
     score: 0,
     wave: 0,
     waveTimer: 0,
@@ -178,21 +126,18 @@ export function createGameData(): GameData {
   };
 }
 
-export function resetGame(game: GameData, mode: 'classic' = 'classic') {
-  setSeed(null);
-  game.mode = mode;
-  game.skin = loadSkin();
+export function resetGame(game: GameData) {
   // recycle live particles back into the pool
   for (const pt of game.particles) particlePool.push(pt);
 
   game.state = 'playing';
   game.score = 0;
   game.wave = 0;
-  game.waveTimer = WAVES.initialTimer;
-  game.waveAnnounce = WAVES.announceFrames;
+  game.waveTimer = 200;
+  game.waveAnnounce = 120;
   game.bossWarning = 0;
   game.bossActive = false;
-  game.enemySpawnTimer = SPAWNING.initialTimer;
+  game.enemySpawnTimer = 60;
   game.difficulty = 1;
   game.combo = 0;
   game.comboTimer = 0;
@@ -212,20 +157,18 @@ export function resetGame(game: GameData, mode: 'classic' = 'classic') {
 const particlePool: Particle[] = [];
 
 function spawnParticles(game: GameData, x: number, y: number, count: number, type: Particle['type'], baseColor?: string) {
-  if (game.particles.length > PARTICLES.maxCount) return;
+  if (game.particles.length > 260) return;
   for (let i = 0; i < count; i++) {
-    const angle = rnd() * Math.PI * 2;
-    const speed = type === 'explosion' ? 1 + rnd() * 4 : 0.4 + rnd() * 2.2;
+    const angle = Math.random() * Math.PI * 2;
+    const speed = type === 'explosion' ? 1 + Math.random() * 4 : 0.4 + Math.random() * 2.2;
     const p = particlePool.pop() ?? { x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 1, size: 1, color: '#fff', type: 'spark' as Particle['type'] };
     p.x = x; p.y = y;
     p.vx = Math.cos(angle) * speed;
     p.vy = Math.sin(angle) * speed;
-    p.life = type === 'trail'
-      ? PARTICLES.trailLife + rnd() * PARTICLES.trailLife
-      : PARTICLES.defaultLife + rnd() * PARTICLES.lifeVariance;
-    p.maxLife = type === 'trail' ? PARTICLES.trailMaxLife : PARTICLES.defaultLife + PARTICLES.lifeVariance;
-    p.size = type === 'spark' ? 1 + rnd() * 2 : 2 + rnd() * 3.5;
-    p.color = baseColor || COLORS.explosion[(rnd() * COLORS.explosion.length) | 0]!;
+    p.life = type === 'trail' ? 10 + Math.random() * 10 : 15 + Math.random() * 22;
+    p.maxLife = type === 'trail' ? 20 : 37;
+    p.size = type === 'spark' ? 1 + Math.random() * 2 : 2 + Math.random() * 3.5;
+    p.color = baseColor || COLORS.explosion[(Math.random() * COLORS.explosion.length) | 0];
     p.type = type;
     game.particles.push(p);
   }
@@ -234,8 +177,7 @@ function spawnParticles(game: GameData, x: number, y: number, count: number, typ
 // ---------- player weapons ----------
 function firePlayerBullets(game: GameData) {
   const p = game.player;
-  const rapidDivider = 2;
-  const effectiveFireRate = p.rapidTimer > 0 ? Math.max(4, p.fireRate / rapidDivider) : p.fireRate;
+  const effectiveFireRate = p.rapidTimer > 0 ? Math.max(4, p.fireRate / 2) : p.fireRate;
 
   if (p.fireTimer > 0) {
     p.fireTimer--;
@@ -244,26 +186,24 @@ function firePlayerBullets(game: GameData) {
 
     const bulletBase: Omit<Bullet, 'vx' | 'vy' | 'x'> = {
       y: p.y - p.height / 2,
-      width: BULLETS.width,
-      height: BULLETS.height,
+      width: 4,
+      height: 14,
       damage: 1,
       piercing: false,
       color: COLORS.bullet,
     };
 
-    game.bullets.push({ ...bulletBase, x: p.x, vx: 0, vy: -BULLETS.baseSpeed });
+    game.bullets.push({ ...bulletBase, x: p.x, vx: 0, vy: -11 });
     game.stats.shots++;
 
     if (p.spreadLevel >= 1) {
-      const [offset, angle, speed] = [BULLETS.spreadOffsets[0], BULLETS.spreadAngles[0], BULLETS.spreadSpeeds[0]];
-      game.bullets.push({ ...bulletBase, x: p.x - offset, vx: -angle, vy: -speed });
-      game.bullets.push({ ...bulletBase, x: p.x + offset, vx: angle, vy: -speed });
+      game.bullets.push({ ...bulletBase, x: p.x - 10, vx: -1.6, vy: -10.5 });
+      game.bullets.push({ ...bulletBase, x: p.x + 10, vx: 1.6, vy: -10.5 });
       game.stats.shots += 2;
     }
     if (p.spreadLevel >= 2) {
-      const [offset, angle, speed] = [BULLETS.spreadOffsets[1], BULLETS.spreadAngles[1], BULLETS.spreadSpeeds[1]];
-      game.bullets.push({ ...bulletBase, x: p.x - offset, vx: -angle, vy: -speed });
-      game.bullets.push({ ...bulletBase, x: p.x + offset, vx: angle, vy: -speed });
+      game.bullets.push({ ...bulletBase, x: p.x - 18, vx: -3.2, vy: -10 });
+      game.bullets.push({ ...bulletBase, x: p.x + 18, vx: 3.2, vy: -10 });
       game.stats.shots += 2;
     }
 
@@ -271,8 +211,8 @@ function firePlayerBullets(game: GameData) {
   }
 
   // Homing missile launcher
-  if (p.missileTimer > 0 && game.frameCount % BULLETS.missileLaunchInterval === 0) {
-    const side = (game.frameCount / BULLETS.missileLaunchInterval) % 2 === 0 ? -1 : 1;
+  if (p.missileTimer > 0 && game.frameCount % 22 === 0) {
+    const side = (game.frameCount / 22) % 2 === 0 ? -1 : 1;
     game.bullets.push({
       x: p.x + side * 16, y: p.y + 6,
       vx: side * 3, vy: -4,
@@ -304,7 +244,7 @@ function spawnEnemy(game: GameData) {
     ['kamikaze', Math.max(0, w - 1) * 3.5],
   ];
   const total = weights.reduce((a, b) => a + b[1], 0);
-  let r = rnd() * total;
+  let r = Math.random() * total;
   let type: EnemyType = 'basic';
   for (const [t, weight] of weights) {
     r -= weight;
@@ -312,7 +252,7 @@ function spawnEnemy(game: GameData) {
   }
 
   const cfg = ENEMY_CONFIGS[type];
-  const x = cfg.width / 2 + rnd() * (CANVAS_W - cfg.width);
+  const x = cfg.width / 2 + Math.random() * (CANVAS_W - cfg.width);
 
   game.enemies.push({
     x,
@@ -324,7 +264,7 @@ function spawnEnemy(game: GameData) {
     speed: cfg.speed + game.difficulty * 0.03,
     type,
     angle: 0,
-    shootTimer: 60 + rnd() * cfg.shootInterval,
+    shootTimer: 60 + Math.random() * cfg.shootInterval,
     shootInterval: Math.max(50, cfg.shootInterval - game.difficulty * 2),
     points: cfg.points,
     flash: 0,
@@ -342,12 +282,12 @@ function spawnBoss(game: GameData) {
   game.enemies.length = 0;
   game.enemyBullets.length = 0;
 
-  const hp = BOSS.baseHp + game.wave * BOSS.hpPerWave;
+  const hp = 50 + game.wave * 8;
   game.enemies.push({
     x: CANVAS_W / 2,
     y: -70,
-    width: BOSS.width,
-    height: BOSS.height,
+    width: 90,
+    height: 80,
     hp,
     maxHp: hp,
     speed: 0.9,
@@ -355,25 +295,25 @@ function spawnBoss(game: GameData) {
     angle: 0,
     shootTimer: 120,
     shootInterval: 50,
-    points: BOSS.pointsBase + game.wave * BOSS.pointsPerWave,
+    points: 2000 + game.wave * 500,
     flash: 0,
-    vx: BOSS.speedX,
+    vx: 1.1,
     phase: 0,
-    phaseTimer: BOSS.phaseTimer,
+    phaseTimer: 260,
   });
   game.bossActive = true;
-  game.bossWarning = BOSS.warningFrames;
+  game.bossWarning = 150;
   game.waveAnnounce = 0;
 }
 
 function bossShoot(game: GameData, e: Enemy, px: number, py: number) {
-  if (game.enemyBullets.length > ENEMY_BULLETS.bossMaxCount) return;
+  if (game.enemyBullets.length > 110) return;
   const ang = Math.atan2(py - e.y, px - e.x);
   if (e.phase === 0) {
     // 5-way aimed spread
     for (let s = -2; s <= 2; s++) {
       const a = ang + s * 0.22;
-      game.enemyBullets.push({ x: e.x, y: e.y + 30, vx: Math.cos(a) * 2.3, vy: Math.sin(a) * 2.3, size: ENEMY_BULLETS.bomberSize });
+      game.enemyBullets.push({ x: e.x, y: e.y + 30, vx: Math.cos(a) * 2.3, vy: Math.sin(a) * 2.3, size: 6 });
     }
   } else if (e.phase === 1) {
     // slow ring
@@ -381,27 +321,24 @@ function bossShoot(game: GameData, e: Enemy, px: number, py: number) {
     const off = game.frameCount * 0.04;
     for (let i = 0; i < n; i++) {
       const a = (i / n) * Math.PI * 2 + off;
-      game.enemyBullets.push({ x: e.x, y: e.y, vx: Math.cos(a) * 1.7, vy: Math.sin(a) * 1.7, size: ENEMY_BULLETS.size });
+      game.enemyBullets.push({ x: e.x, y: e.y, vx: Math.cos(a) * 1.7, vy: Math.sin(a) * 1.7, size: 5 });
     }
   } else {
     // fast aimed shot
-    game.enemyBullets.push({ x: e.x, y: e.y + 30, vx: Math.cos(ang) * 3.2, vy: Math.sin(ang) * 3.2, size: ENEMY_BULLETS.size });
+    game.enemyBullets.push({ x: e.x, y: e.y + 30, vx: Math.cos(ang) * 3.2, vy: Math.sin(ang) * 3.2, size: 5 });
   }
 }
 
-const POWER_UP_WEIGHTS: { type: PowerUpType; threshold: number }[] = [
-  { type: 'spread', threshold: 0.24 },
-  { type: 'rapid', threshold: 0.46 },
-  { type: 'shield', threshold: 0.64 },
-  { type: 'missile', threshold: 0.76 },
-  { type: 'health', threshold: 0.90 },
-  { type: 'bomb', threshold: 1.0 },
-];
-
 function spawnRandomPowerUp(game: GameData, x: number, y: number) {
-  const roll = rnd();
-  const type = POWER_UP_WEIGHTS.find((w) => roll < w.threshold)?.type ?? 'bomb';
-  game.powerUps.push({ x, y, vy: POWER_UPS.fallSpeed, type, size: POWER_UPS.size, pulse: 0 });
+  const roll = Math.random();
+  let type: PowerUpType;
+  if (roll < 0.24) type = 'spread';
+  else if (roll < 0.46) type = 'rapid';
+  else if (roll < 0.64) type = 'shield';
+  else if (roll < 0.76) type = 'missile';
+  else if (roll < 0.90) type = 'health';
+  else type = 'bomb';
+  game.powerUps.push({ x, y, vy: 1.2, type, size: 16, pulse: 0 });
 }
 
 function triggerBomb(game: GameData) {
@@ -427,9 +364,9 @@ function addFloatingText(game: GameData, x: number, y: number, text: string, col
 function killEnemy(game: GameData, i: number, e: Enemy) {
   game.stats.kills++;
   game.combo++;
-  game.comboTimer = COMBO.durationFrames;
+  game.comboTimer = 150;
   if (game.combo > game.stats.bestCombo) game.stats.bestCombo = game.combo;
-  const comboMultiplier = Math.min(game.combo, COMBO.maxMultiplier);
+  const comboMultiplier = Math.min(game.combo, 10);
   const pts = e.points * comboMultiplier;
   game.score += pts;
   game.screenShake = Math.min(8, 3 + e.maxHp * 0.5);
@@ -447,7 +384,7 @@ function killEnemy(game: GameData, i: number, e: Enemy) {
     spawnRandomPowerUp(game, e.x - 40, e.y);
     spawnRandomPowerUp(game, e.x, e.y + 10);
     spawnRandomPowerUp(game, e.x + 40, e.y);
-  } else if (rnd() < POWER_UPS.dropChanceBase + game.wave * POWER_UPS.dropChancePerWave) {
+  } else if (Math.random() < 0.13 + game.wave * 0.008) {
     spawnRandomPowerUp(game, e.x, e.y);
   }
 
@@ -457,7 +394,7 @@ function killEnemy(game: GameData, i: number, e: Enemy) {
 function damagePlayer(game: GameData) {
   const p = game.player;
   p.hp--;
-  p.invincibleTimer = PLAYER.invincibleFrames;
+  p.invincibleTimer = 100;
   game.screenShake = 12;
   game.combo = 0;
   spawnParticles(game, p.x, p.y, 15, 'explosion', COLORS.player);
@@ -528,12 +465,12 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
   if (p.invincibleTimer > 0) p.invincibleTimer -= timeScale;
 
   if (game.frameCount % 3 === 0) {
-    spawnParticles(game, p.x + (rnd() - 0.5) * 8, p.y + p.height / 2, 1, 'trail', COLORS.playerGlow);
+    spawnParticles(game, p.x + (Math.random() - 0.5) * 8, p.y + p.height / 2, 1, 'trail', COLORS.playerGlow);
   }
 
   // --- PLAYER BULLETS ---
   for (let i = game.bullets.length - 1; i >= 0; i--) {
-    const b = game.bullets[i]!;
+    const b = game.bullets[i];
 
     if (b.homing) {
       // steer toward nearest enemy
@@ -562,19 +499,17 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
     b.x += b.vx * timeScale;
     b.y += b.vy * timeScale;
-    const pad = BULLETS.boundsPadding;
-    if (b.y < -pad || b.y > CANVAS_H + pad || b.x < -pad || b.x > CANVAS_W + pad) {
+    if (b.y < -24 || b.y > CANVAS_H + 24 || b.x < -24 || b.x > CANVAS_W + 24) {
       swapRemove(game.bullets, i);
     }
   }
 
   // --- ENEMY BULLETS ---
   for (let i = game.enemyBullets.length - 1; i >= 0; i--) {
-    const b = game.enemyBullets[i]!;
+    const b = game.enemyBullets[i];
     b.x += b.vx * timeScale;
     b.y += b.vy * timeScale;
-    const pad = ENEMY_BULLETS.boundsPadding;
-    if (b.y > CANVAS_H + pad || b.y < -pad || b.x < -pad || b.x > CANVAS_W + pad) {
+    if (b.y > CANVAS_H + 20 || b.y < -20 || b.x < -20 || b.x > CANVAS_W + 20) {
       swapRemove(game.enemyBullets, i);
       continue;
     }
@@ -592,11 +527,9 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
   // --- ENEMY SPAWNING ---
   game.enemySpawnTimer -= timeScale;
   if (game.enemySpawnTimer <= 0) {
-    const base = Math.max(SPAWNING.minInterval, SPAWNING.baseInterval - game.wave * SPAWNING.intervalDecayPerWave);
-    game.enemySpawnTimer = game.bossActive ? base * SPAWNING.bossIntervalMultiplier : base;
-    const maxEnemies = game.bossActive
-      ? SPAWNING.bossMaxEnemies
-      : Math.min(SPAWNING.maxEnemiesCap, SPAWNING.maxEnemiesBase + game.wave * SPAWNING.maxEnemiesPerWave);
+    const base = Math.max(45, 130 - game.wave * 6);
+    game.enemySpawnTimer = game.bossActive ? base * 2 : base;
+    const maxEnemies = game.bossActive ? 3 : Math.min(13, 6 + game.wave);
     if (game.enemies.length < maxEnemies) {
       spawnEnemy(game);
     }
@@ -606,12 +539,12 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
   game.waveTimer -= timeScale;
   if (game.waveTimer <= 0) {
     game.wave++;
-    game.difficulty = 1 + game.wave * WAVES.difficultyScale;
-    game.waveTimer = WAVES.timerBase + game.wave * WAVES.timerPerWave;
-    if (game.wave % WAVES.bossInterval === 0) {
+    game.difficulty = 1 + game.wave * 0.3;
+    game.waveTimer = 700 + game.wave * 60;
+    if (game.wave % 5 === 0) {
       spawnBoss(game);
     } else {
-      game.waveAnnounce = WAVES.announceFrames;
+      game.waveAnnounce = 120;
     }
   }
   if (game.waveAnnounce > 0) game.waveAnnounce -= timeScale;
@@ -619,33 +552,32 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- ENEMIES ---
   for (let i = game.enemies.length - 1; i >= 0; i--) {
-    const e = game.enemies[i]!;
+    const e = game.enemies[i];
     if (e.flash > 0) e.flash -= 1;
 
     if (e.type === 'boss') {
-      if (e.y < BOSS.enterY) {
+      if (e.y < 115) {
         e.y += 0.9 * timeScale;
       } else {
         e.x += e.vx * timeScale;
-        if (e.x < BOSS.bounceXMin || e.x > BOSS.bounceXMax) e.vx *= -1;
+        if (e.x < 80 || e.x > CANVAS_W - 80) e.vx *= -1;
       }
-      e.angle += BOSS.rotationSpeed * timeScale;
+      e.angle += 0.008 * timeScale;
       e.phaseTimer -= timeScale;
       if (e.phaseTimer <= 0) {
         e.phase = (e.phase + 1) % 3;
-        e.phaseTimer = BOSS.phaseTimer;
+        e.phaseTimer = 260;
       }
       e.shootTimer -= timeScale;
       if (e.shootTimer <= 0 && e.y > 50) {
-        e.shootTimer = BOSS.shootTimers[e.phase] ?? BOSS.shootTimers[0]!;
+        e.shootTimer = e.phase === 0 ? 60 : e.phase === 1 ? 90 : 32;
         bossShoot(game, e, p.x, p.y);
       }
     } else if (e.type === 'kamikaze') {
-      const kamikazeDiveThreshold = 110;
       if (e.phase === 0) {
         e.y += e.speed * timeScale;
         e.flash = game.frameCount % 12 < 6 ? 1 : 0;
-        if (e.y > kamikazeDiveThreshold) {
+        if (e.y > 110) {
           e.phase = 1;
           const ang = Math.atan2(p.y - e.y, p.x - e.x);
           e.vx = Math.cos(ang) * 2.5;
@@ -671,17 +603,17 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
       e.angle += 0.02 * timeScale;
 
       e.shootTimer -= timeScale;
-      if (e.shootTimer <= 0 && e.y > 20 && e.y < CANVAS_H - 140 && game.enemyBullets.length < ENEMY_BULLETS.maxCount) {
+      if (e.shootTimer <= 0 && e.y > 20 && e.y < CANVAS_H - 140 && game.enemyBullets.length < 90) {
         e.shootTimer = e.shootInterval;
         const angle = Math.atan2(p.y - e.y, p.x - e.x);
-        const bulletSpeed = e.type === 'bomber' ? ENEMY_BULLETS.bomberSpeed : ENEMY_BULLETS.baseSpeed;
+        const bulletSpeed = e.type === 'bomber' ? 2.5 : 2.1;
         if (e.type === 'bomber') {
           for (let s = -1; s <= 1; s++) {
-            const a = angle + s * ENEMY_BULLETS.bomberSpread;
-            game.enemyBullets.push({ x: e.x, y: e.y + e.height / 2, vx: Math.cos(a) * bulletSpeed, vy: Math.sin(a) * bulletSpeed, size: ENEMY_BULLETS.bomberSize });
+            const a = angle + s * 0.3;
+            game.enemyBullets.push({ x: e.x, y: e.y + e.height / 2, vx: Math.cos(a) * bulletSpeed, vy: Math.sin(a) * bulletSpeed, size: 6 });
           }
         } else {
-          game.enemyBullets.push({ x: e.x, y: e.y + e.height / 2, vx: Math.cos(angle) * bulletSpeed, vy: Math.sin(angle) * bulletSpeed, size: ENEMY_BULLETS.size });
+          game.enemyBullets.push({ x: e.x, y: e.y + e.height / 2, vx: Math.cos(angle) * bulletSpeed, vy: Math.sin(angle) * bulletSpeed, size: 5 });
         }
       }
     }
@@ -696,7 +628,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
     // Bullet collision
     let dead = false;
     for (let j = game.bullets.length - 1; j >= 0; j--) {
-      const b = game.bullets[j]!;
+      const b = game.bullets[j];
       if (rectsOverlap(b.x, b.y, b.width, b.height, e.x, e.y, e.width, e.height)) {
         e.hp -= b.damage;
         e.flash = 4;
@@ -734,9 +666,9 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- POWER UPS ---
   for (let i = game.powerUps.length - 1; i >= 0; i--) {
-    const pw = game.powerUps[i]!;
+    const pw = game.powerUps[i];
     pw.y += pw.vy * timeScale;
-    pw.pulse += POWER_UPS.pulseSpeed;
+    pw.pulse += 0.08;
     if (pw.y > CANVAS_H + 30) {
       swapRemove(game.powerUps, i);
       continue;
@@ -750,15 +682,15 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
           addFloatingText(game, p.x, p.y - 30, 'SPREAD SHOT', POWERUP_COLORS.spread);
           break;
         case 'rapid':
-          p.rapidTimer = POWER_UPS.rapidDuration;
+          p.rapidTimer = 600;
           addFloatingText(game, p.x, p.y - 30, 'RAPID FIRE', POWERUP_COLORS.rapid);
           break;
         case 'shield':
-          p.shieldTimer = POWER_UPS.shieldDuration;
+          p.shieldTimer = 480;
           addFloatingText(game, p.x, p.y - 30, 'SHIELD', POWERUP_COLORS.shield);
           break;
         case 'missile':
-          p.missileTimer = POWER_UPS.missileDuration;
+          p.missileTimer = 600;
           addFloatingText(game, p.x, p.y - 30, 'HOMING MISSILES', POWERUP_COLORS.missile);
           break;
         case 'health':
@@ -780,7 +712,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- FLOATING TEXTS ---
   for (let i = game.floatingTexts.length - 1; i >= 0; i--) {
-    const ft = game.floatingTexts[i]!;
+    const ft = game.floatingTexts[i];
     ft.y -= 1.1 * timeScale;
     ft.life -= timeScale;
     if (ft.life <= 0) swapRemove(game.floatingTexts, i);
@@ -788,7 +720,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- PARTICLES ---
   for (let i = game.particles.length - 1; i >= 0; i--) {
-    const pt = game.particles[i]!;
+    const pt = game.particles[i];
     pt.x += pt.vx * timeScale;
     pt.y += pt.vy * timeScale;
     pt.life -= timeScale;
@@ -805,15 +737,15 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
     s.y += s.speed * timeScale;
     if (s.y > CANVAS_H) {
       s.y = -5;
-      s.x = rnd() * CANVAS_W;
+      s.x = Math.random() * CANVAS_W;
     }
   }
 
   // --- SCREEN SHAKE DECAY ---
   if (game.screenShake > 0) {
-    game.screenShake *= SCREEN.shakeDecay;
-    game.screenShakeAngle = rnd() * Math.PI * 2;
-    if (game.screenShake < SCREEN.shakeMin) game.screenShake = 0;
+    game.screenShake *= 0.86;
+    game.screenShakeAngle = Math.random() * Math.PI * 2;
+    if (game.screenShake < 0.5) game.screenShake = 0;
   }
 }
 
@@ -822,8 +754,6 @@ function gameOver(game: GameData) {
   game.screenShake = 25;
   game.slowMotion = 0;
   spawnParticles(game, game.player.x, game.player.y, 45, 'explosion');
-
-  recordRun({ score: game.score, wave: game.wave + 1, kills: game.stats.kills, time: game.stats.time });
 
   game.highScores.push(Math.round(game.score));
   game.highScores.sort((a, b) => b - a);
