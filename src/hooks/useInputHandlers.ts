@@ -65,9 +65,12 @@ export function useInputHandlers(
         else if (game.state === 'paused') game.state = 'playing';
         e.preventDefault();
       } else if (isKey(e.code, KEYS.start)) {
-        if (game.state === 'menu' || game.state === 'gameover') {
+        if (game.state === 'menu') {
           initAudio();
-          resetGame(game);
+          resetGame(game, 'classic');
+        } else if (game.state === 'gameover') {
+          initAudio();
+          resetGame(game, game.mode);
         } else if (game.state === 'paused') {
           game.state = 'playing';
         }
@@ -104,8 +107,7 @@ export function useInputHandlers(
       }
 
       if (game.state === 'menu' || game.state === 'gameover') {
-        initAudio();
-        resetGame(game);
+        // The React overlay owns these screens (play buttons, leaderboard, sharing).
         return;
       }
       if (game.state === 'paused') {
@@ -144,12 +146,7 @@ export function useInputHandlers(
 
     const mouseDown = () => {
       const game = gameRef.current;
-      if (game.state === 'menu' || game.state === 'gameover') {
-        initAudio();
-        resetGame(game);
-      } else if (game.state === 'paused') {
-        game.state = 'playing';
-      }
+      if (game.state === 'paused') game.state = 'playing';
     };
 
     window.addEventListener('keydown', keyDown);
