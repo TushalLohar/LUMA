@@ -49,7 +49,7 @@ export function useGameLoop(
         }
         if (game.state === 'gameover') {
           for (let i = game.particles.length - 1; i >= 0; i--) {
-            const pt = game.particles[i];
+            const pt = game.particles[i]!;
             pt.x += pt.vx * 0.3;
             pt.y += pt.vy * 0.3;
             pt.life -= 0.5;

@@ -597,7 +597,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
       }
       e.shootTimer -= timeScale;
       if (e.shootTimer <= 0 && e.y > 50) {
-        e.shootTimer = BOSS.shootTimers[e.phase];
+        e.shootTimer = BOSS.shootTimers[e.phase] ?? BOSS.shootTimers[0]!;
         bossShoot(game, e, p.x, p.y);
       }
     } else if (e.type === 'kamikaze') {
