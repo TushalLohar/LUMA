@@ -23,10 +23,10 @@ export interface Ship {
 }
 
 export const SHIPS: Ship[] = [
-  { id: 0, name: 'INTERCEPTOR', color: '#00e5ff', glow: '#00b8d4', unlockAt: 0 },
-  { id: 1, name: 'VIPER', color: '#69f0ae', glow: '#00c853', unlockAt: 250 },
-  { id: 2, name: 'EMBER', color: '#ff9100', glow: '#ff6d00', unlockAt: 1000 },
-  { id: 3, name: 'NOVA PRIME', color: '#e040fb', glow: '#aa00ff', unlockAt: 3000 },
+  { id: 0, name: 'EMBER', color: '#ff7a1a', glow: '#ff3d00', unlockAt: 0 },
+  { id: 1, name: 'BONE', color: '#f2e8dc', glow: '#ffb703', unlockAt: 250 },
+  { id: 2, name: 'HAZARD', color: '#ffd166', glow: '#ff9e00', unlockAt: 1000 },
+  { id: 3, name: 'CINDER', color: '#e5484d', glow: '#ff2d20', unlockAt: 3000 },
 ];
 
 const EMPTY: Progress = { runs: 0, kills: 0, bestScore: 0, bestWave: 0, totalTime: 0 };

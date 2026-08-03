@@ -65,11 +65,14 @@
   --color-arcade-gold: var(--arcade-gold);
   --color-arcade-surface: var(--arcade-surface);
   --color-arcade-border: var(--arcade-border);
-  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --color-arcade-ink: var(--arcade-ink);
+  --font-mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: "Chakra Petch", "Arial Narrow", sans-serif;
+  --font-sans: "IBM Plex Mono", ui-monospace, monospace;
 }
 
 :root {
-  --radius: 0.625rem;
+  --radius: 0.125rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.129 0.042 264.695);
   --card: oklch(1 0 0);
@@ -105,15 +108,15 @@
 }
 
 .dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
+  --background: oklch(0.15 0.008 60);
+  --foreground: oklch(0.96 0.01 80);
   --card: oklch(0.208 0.042 265.755);
   --card-foreground: oklch(0.984 0.003 247.858);
   --popover: oklch(0.208 0.042 265.755);
   --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
+  --primary: oklch(0.74 0.19 52);
+  --primary-foreground: oklch(0.16 0.008 60);
+  --secondary: oklch(0.24 0.015 55);
   --secondary-foreground: oklch(0.984 0.003 247.858);
   --muted: oklch(0.279 0.041 260.031);
   --muted-foreground: oklch(0.704 0.04 256.788);
@@ -150,14 +153,15 @@
   }
 }
 
-/* NOVA BLASTER arcade palette (shared by canvas + React chrome) */
+/* NOVA BLASTER "ember command" palette (shared by canvas + React chrome) */
 :root {
-  --arcade: oklch(0.83 0.14 205);
-  --arcade-glow: oklch(0.72 0.15 210);
-  --arcade-pink: oklch(0.7 0.22 2);
-  --arcade-gold: oklch(0.86 0.17 90);
-  --arcade-surface: oklch(0.16 0.04 275 / 0.88);
-  --arcade-border: oklch(0.83 0.14 205 / 0.35);
+  --arcade: oklch(0.74 0.19 52);
+  --arcade-glow: oklch(0.66 0.22 40);
+  --arcade-pink: oklch(0.64 0.21 25);
+  --arcade-gold: oklch(0.87 0.15 88);
+  --arcade-ink: oklch(0.16 0.008 60);
+  --arcade-surface: oklch(0.19 0.012 55 / 0.9);
+  --arcade-border: oklch(0.74 0.19 52 / 0.28);
 }
 
 .arcade-locked {
@@ -166,7 +170,7 @@
 
 html,
 body {
-  background: #000;
+  background: oklch(0.15 0.008 60);
   -webkit-tap-highlight-color: transparent;
   user-select: none;
 }

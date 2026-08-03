@@ -1,5 +1,5 @@
 import { useCallback, useEffect } from 'react';
-import { CANVAS_W, CANVAS_H, KEYS, UI } from '@/game/constants';
+import { CANVAS_W, CANVAS_H, KEYS } from '@/game/constants';
 import { initAudio, toggleMute } from '@/game/audio';
 import { resetGame } from '@/game/engine';
 import type { GameData, InputState } from '@/game/types';
@@ -70,7 +70,7 @@ export function useInputHandlers(
           resetGame(game, 'classic');
         } else if (game.state === 'gameover') {
           initAudio();
-          resetGame(game, game.mode);
+          resetGame(game, 'classic');
         } else if (game.state === 'paused') {
           game.state = 'playing';
         }
@@ -95,31 +95,9 @@ export function useInputHandlers(
       if (!touch) return;
       const coords = getCanvasCoordsRef(touch.clientX, touch.clientY);
 
-      // Sound toggle zone (top area, left of pause) — works in every state
-      if (
-        coords.y < UI.topZoneY &&
-        coords.x > UI.soundButtonXMin &&
-        coords.x <= UI.soundButtonXMax
-      ) {
-        initAudio();
-        toggleMute();
-        return;
-      }
-
-      if (game.state === 'menu' || game.state === 'gameover') {
-        // The React overlay owns these screens (play buttons, leaderboard, sharing).
-        return;
-      }
-      if (game.state === 'paused') {
-        game.state = 'playing';
-        return;
-      }
-
-      // Pause button zone (top-right corner)
-      if (coords.x > UI.pauseButtonX && coords.y < UI.topZoneY) {
-        game.state = 'paused';
-        return;
-      }
+      // The React chrome owns menu / pause / game-over screens and the
+      // sound + pause buttons, so the canvas only handles flying the ship.
+      if (game.state !== 'playing') return;
 
       input.touchX = coords.x;
       input.touchY = coords.y;

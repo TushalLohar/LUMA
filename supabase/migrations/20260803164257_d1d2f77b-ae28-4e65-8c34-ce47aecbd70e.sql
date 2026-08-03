@@ -1,0 +1,1 @@
+DELETE FROM public.scores WHERE tag = 'TST' AND score = 1234;

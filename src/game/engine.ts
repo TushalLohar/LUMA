@@ -1,5 +1,5 @@
 import type { GameData, InputState, Player, Enemy, Particle, Star, Bullet, PowerUpType, EnemyType } from './types';
-import { dailyKey, type ScoreMode } from '@/lib/leaderboard-schema';
+import type { ScoreMode } from '@/lib/leaderboard-schema';
 import { loadSkin, recordRun } from './progress';
 import {
   CANVAS_W,
@@ -21,27 +21,27 @@ import {
 export { CANVAS_W, CANVAS_H };
 
 export const COLORS = {
-  bg: '#070712',
-  player: '#00e5ff',
-  playerGlow: '#00b8d4',
-  bullet: '#ffeb3b',
-  bulletGlow: '#ffc107',
-  missile: '#ffab40',
-  enemy1: '#ff4081',
-  enemy2: '#7c4dff',
-  enemy3: '#ff6e40',
-  enemy4: '#69f0ae',
-  kamikaze: '#ff1744',
-  boss: '#d500f9',
-  explosion: ['#ff4081', '#ffab40', '#ffeb3b', '#ffffff', '#ff6e40'],
-  shield: '#40c4ff',
-  powerSpread: '#ff4081',
-  powerRapid: '#ffeb3b',
-  powerShield: '#40c4ff',
-  powerBomb: '#ff6e40',
-  powerHealth: '#76ff03',
-  powerMissile: '#ff9100',
-  hud: '#00e5ff',
+  bg: '#0a0908',
+  player: '#ff7a1a',
+  playerGlow: '#ff3d00',
+  bullet: '#fff4d6',
+  bulletGlow: '#ffb703',
+  missile: '#ffd166',
+  enemy1: '#e5484d',
+  enemy2: '#8b7ff0',
+  enemy3: '#d97706',
+  enemy4: '#5eead4',
+  kamikaze: '#ff2d20',
+  boss: '#f43f5e',
+  explosion: ['#ff7a1a', '#ffd166', '#fff4d6', '#e5484d', '#ff3d00'],
+  shield: '#7dd3fc',
+  powerSpread: '#e5484d',
+  powerRapid: '#ffb703',
+  powerShield: '#7dd3fc',
+  powerBomb: '#ff7a1a',
+  powerHealth: '#5eead4',
+  powerMissile: '#ffd166',
+  hud: '#ffb703',
 };
 
 export const POWERUP_COLORS: Record<PowerUpType, string> = {
@@ -180,7 +180,7 @@ export function createGameData(): GameData {
 }
 
 export function resetGame(game: GameData, mode: ScoreMode = 'classic') {
-  setSeed(mode === 'daily' ? seedFromString(`nova-${dailyKey()}`) : null);
+  setSeed(null);
   game.mode = mode;
   game.skin = loadSkin();
   // recycle live particles back into the pool

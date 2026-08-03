@@ -1,6 +1,5 @@
 import type { GameData, InputState, PowerUpType } from './types';
 import { CANVAS_W, CANVAS_H, COLORS, POWERUP_COLORS } from './engine';
-import { isMuted } from './audio';
 import { shipById } from './progress';
 
 // ---------- pre-rendered glow sprites (big perf win vs per-frame gradients) ----------
@@ -428,18 +427,10 @@ export function renderGame(
     ctx.globalAlpha = 1;
   }
 
-  // Pause overlay
+  // Pause / game over dim — the React chrome renders the actual UI
   if (game.state === 'paused') {
-    ctx.fillStyle = 'rgba(0,0,0,0.65)';
+    ctx.fillStyle = 'rgba(0,0,0,0.55)';
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 48px monospace';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('PAUSED', CANVAS_W / 2, CANVAS_H / 2 - 30);
-    ctx.font = '17px monospace';
-    ctx.fillStyle = COLORS.hud;
-    ctx.fillText('ESC or tap to resume', CANVAS_W / 2, CANVAS_H / 2 + 18);
   }
 
   // Game over — dim only; the summary/leaderboard UI is rendered in React
@@ -476,14 +467,6 @@ function renderHUD(ctx: CanvasRenderingContext2D, game: GameData) {
   ctx.font = '14px monospace';
   ctx.textAlign = 'right';
   ctx.fillText(`WAVE ${game.wave + 1}`, CANVAS_W - 70, 30);
-
-  // Pause icon (two bars) — touch target: x > W-60, y < 70
-  ctx.fillStyle = 'rgba(255,255,255,0.55)';
-  ctx.fillRect(CANVAS_W - 34, 42, 6, 18);
-  ctx.fillRect(CANVAS_W - 24, 42, 6, 18);
-
-  // Sound icon — touch target: W-115..W-62, y < 70
-  drawSoundIcon(ctx, CANVAS_W - 66, 51);
 
   // Boss health bar
   if (game.bossActive) {
@@ -535,63 +518,12 @@ function renderHUD(ctx: CanvasRenderingContext2D, game: GameData) {
   }
 }
 
-function drawSoundIcon(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  const muted = isMuted();
-  ctx.fillStyle = muted ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.55)';
-  // speaker body
-  ctx.beginPath();
-  ctx.moveTo(x - 8, y - 3);
-  ctx.lineTo(x - 4, y - 3);
-  ctx.lineTo(x + 1, y - 8);
-  ctx.lineTo(x + 1, y + 8);
-  ctx.lineTo(x - 4, y + 3);
-  ctx.lineTo(x - 8, y + 3);
-  ctx.closePath();
-  ctx.fill();
-  ctx.strokeStyle = muted ? 'rgba(255,80,80,0.8)' : 'rgba(255,255,255,0.55)';
-  ctx.lineWidth = 1.5;
-  if (muted) {
-    ctx.beginPath();
-    ctx.moveTo(x + 4, y - 5);
-    ctx.lineTo(x + 11, y + 5);
-    ctx.moveTo(x + 11, y - 5);
-    ctx.lineTo(x + 4, y + 5);
-    ctx.stroke();
-  } else {
-    ctx.beginPath();
-    ctx.arc(x + 3, y, 4, -Math.PI / 3, Math.PI / 3);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.arc(x + 3, y, 7.5, -Math.PI / 3, Math.PI / 3);
-    ctx.stroke();
-  }
-}
-
 // ---------- menu ----------
 function renderMenu(ctx: CanvasRenderingContext2D, game: GameData) {
-  const fc = game.frameCount;
-  const titleY = 170 + Math.sin(fc * 0.03) * 8;
-
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'alphabetic';
-
-  // Glow behind the title
+  // The menu UI lives in React (see components/game/MenuOverlay); the canvas
+  // only keeps a subtle ember horizon glow behind it.
+  const pulse = 0.18 + Math.sin(game.frameCount * 0.02) * 0.05;
   ctx.globalCompositeOperation = 'lighter';
-  drawGlow(ctx, shipById(game.skin).color, CANVAS_W / 2, titleY - 10, 150, 0.35);
+  drawGlow(ctx, shipById(game.skin).color, CANVAS_W / 2, CANVAS_H + 40, 340, pulse);
   ctx.globalCompositeOperation = 'source-over';
-
-  ctx.fillStyle = '#fff';
-  ctx.font = 'bold 58px monospace';
-  ctx.fillText('NOVA', CANVAS_W / 2, titleY);
-  ctx.fillStyle = shipById(game.skin).color;
-  ctx.fillText('BLASTER', CANVAS_W / 2, titleY + 54);
-
-  ctx.fillStyle = COLORS.hud;
-  ctx.font = '14px monospace';
-  ctx.globalAlpha = 0.7;
-  ctx.fillText('DEFEND THE GALAXY', CANVAS_W / 2, titleY + 88);
-  ctx.globalAlpha = 1;
-
-  // Sound icon on menu
-  drawSoundIcon(ctx, CANVAS_W - 66, 51);
 }

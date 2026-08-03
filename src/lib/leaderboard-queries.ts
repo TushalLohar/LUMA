@@ -1,11 +1,10 @@
 import { queryOptions } from "@tanstack/react-query";
 import { listScores } from "@/lib/leaderboard.functions";
-import type { ScoreMode } from "@/lib/leaderboard-schema";
 
-export function scoresQueryOptions(mode: ScoreMode, limit = 10) {
+export function scoresQueryOptions(limit = 10) {
   return queryOptions({
-    queryKey: ["scores", mode, limit] as const,
-    queryFn: () => listScores({ data: { mode, limit } }),
+    queryKey: ["scores", limit] as const,
+    queryFn: () => listScores({ data: { limit } }),
     staleTime: 30_000,
   });
 }

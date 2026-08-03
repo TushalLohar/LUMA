@@ -16,6 +16,7 @@ import {
 import { MenuOverlay } from "@/components/game/MenuOverlay";
 import { GameOverOverlay, type RunSummary } from "@/components/game/GameOverOverlay";
 import { HowToPlay } from "@/components/game/HowToPlay";
+import { GameHud } from "@/components/game/GameHud";
 
 export default function NovaBlaster() {
   const canvasRef = useCanvas();
@@ -33,7 +34,7 @@ export default function NovaBlaster() {
     touchFire: false,
   });
 
-  const [screen, setScreen] = useState<"menu" | "playing" | "gameover">("menu");
+  const [screen, setScreen] = useState<"menu" | "playing" | "paused" | "gameover">("menu");
   const [progress, setProgress] = useState<Progress>({
     runs: 0,
     kills: 0,
@@ -68,7 +69,7 @@ export default function NovaBlaster() {
       accuracy: acc,
       bestCombo: game.stats.bestCombo,
       time: game.stats.time,
-      mode: game.mode,
+      mode: "classic",
       skin: game.skin,
       isPersonalBest: Math.round(game.score) > bestAtStart.current,
     };
@@ -78,7 +79,14 @@ export default function NovaBlaster() {
   useEffect(() => {
     const id = window.setInterval(() => {
       const game = gameRef.current;
-      const next = game.state === "gameover" ? "gameover" : game.state === "menu" ? "menu" : "playing";
+      const next =
+        game.state === "gameover"
+          ? "gameover"
+          : game.state === "menu"
+            ? "menu"
+            : game.state === "paused"
+              ? "paused"
+              : "playing";
       setScreen((prev) => {
         if (prev === next) return prev;
         if (next === "gameover") {
@@ -91,10 +99,10 @@ export default function NovaBlaster() {
     return () => window.clearInterval(id);
   }, [buildSummary]);
 
-  const play = useCallback((mode: "classic" | "daily") => {
+  const play = useCallback(() => {
     initAudio();
     bestAtStart.current = loadProgress().bestScore;
-    resetGame(gameRef.current, mode);
+    resetGame(gameRef.current, "classic");
     setScreen("playing");
   }, []);
 
@@ -109,14 +117,36 @@ export default function NovaBlaster() {
     gameRef.current.skin = id;
   }, []);
 
+  const goMenu = useCallback(() => {
+    gameRef.current.state = "menu";
+    setScreen("menu");
+    setProgress(loadProgress());
+  }, []);
+
   return (
-    <div className="dark fixed inset-0 overflow-hidden bg-black select-none touch-none">
+    <div className="dark fixed inset-0 overflow-hidden bg-background select-none touch-none">
       <h1 className="sr-only">NOVA BLASTER — free arcade space shooter</h1>
       <canvas
         ref={canvasRef}
         className="block h-full w-full"
         style={{ imageRendering: "pixelated" }}
       />
+
+      {(screen === "playing" || screen === "paused") && (
+        <GameHud
+          paused={screen === "paused"}
+          onPause={() => {
+            gameRef.current.state = "paused";
+            setScreen("paused");
+          }}
+          onResume={() => {
+            gameRef.current.state = "playing";
+            setScreen("playing");
+          }}
+          onRestart={play}
+          onMenu={goMenu}
+        />
+      )}
 
       {screen === "menu" && !showHelp && (
         <MenuOverlay
@@ -129,15 +159,7 @@ export default function NovaBlaster() {
       )}
 
       {screen === "gameover" && run && (
-        <GameOverOverlay
-          run={run}
-          onPlayAgain={() => play(run.mode)}
-          onMenu={() => {
-            gameRef.current.state = "menu";
-            setScreen("menu");
-            setProgress(loadProgress());
-          }}
-        />
+        <GameOverOverlay run={run} onPlayAgain={play} onMenu={goMenu} />
       )}
 
       {showHelp && <HowToPlay onClose={closeHelp} />}
