@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
-import { listScores } from "@/lib/leaderboard.functions";
+import { scoresQueryOptions } from "@/lib/leaderboard-queries";
 import type { ScoreMode } from "@/lib/leaderboard-schema";
 import { cn } from "@/lib/utils";
 
@@ -15,12 +14,7 @@ export function LeaderboardTable({
   limit?: number;
   className?: string;
 }) {
-  const fetchScores = useServerFn(listScores);
-  const { data, isLoading } = useQuery({
-    queryKey: ["scores", mode, limit],
-    queryFn: () => fetchScores({ data: { mode, limit } }),
-    staleTime: 30_000,
-  });
+  const { data, isLoading } = useQuery(scoresQueryOptions(mode, limit));
 
   if (isLoading) {
     return <p className={cn("font-mono text-xs text-arcade/60", className)}>LOADING…</p>;
