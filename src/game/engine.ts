@@ -3,28 +3,30 @@ import type { GameData, InputState, Player, Enemy, Particle, Star, Bullet, Power
 export const CANVAS_W = 480;
 export const CANVAS_H = 720;
 
+export const LOGIC_HZ = 120;
+
 export const COLORS = {
-  bg: '#070712',
-  player: '#00e5ff',
-  playerGlow: '#00b8d4',
-  bullet: '#ffeb3b',
-  bulletGlow: '#ffc107',
-  missile: '#ffab40',
-  enemy1: '#ff4081',
-  enemy2: '#7c4dff',
-  enemy3: '#ff6e40',
-  enemy4: '#69f0ae',
-  kamikaze: '#ff1744',
-  boss: '#d500f9',
-  explosion: ['#ff4081', '#ffab40', '#ffeb3b', '#ffffff', '#ff6e40'],
-  shield: '#40c4ff',
-  powerSpread: '#ff4081',
-  powerRapid: '#ffeb3b',
-  powerShield: '#40c4ff',
-  powerBomb: '#ff6e40',
-  powerHealth: '#76ff03',
-  powerMissile: '#ff9100',
-  hud: '#00e5ff',
+  bg: '#05070f',
+  player: '#ffb347',
+  playerGlow: '#ff7a18',
+  bullet: '#fff3c4',
+  bulletGlow: '#ffd166',
+  missile: '#ff5f6d',
+  enemy1: '#4dd0e1',
+  enemy2: '#8f7bff',
+  enemy3: '#5eead4',
+  enemy4: '#a3e635',
+  kamikaze: '#ff3b6b',
+  boss: '#c026d3',
+  explosion: ['#ffb347', '#fff3c4', '#ff7a18', '#ffffff', '#ff5f6d'],
+  shield: '#7dd3fc',
+  powerSpread: '#ff8fa3',
+  powerRapid: '#ffd166',
+  powerShield: '#7dd3fc',
+  powerBomb: '#ff7a18',
+  powerHealth: '#a3e635',
+  powerMissile: '#ff5f6d',
+  hud: '#ffb347',
 };
 
 export const POWERUP_COLORS: Record<PowerUpType, string> = {
@@ -682,15 +684,15 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
           addFloatingText(game, p.x, p.y - 30, 'SPREAD SHOT', POWERUP_COLORS.spread);
           break;
         case 'rapid':
-          p.rapidTimer = 600;
+          p.rapidTimer = 10 * LOGIC_HZ;
           addFloatingText(game, p.x, p.y - 30, 'RAPID FIRE', POWERUP_COLORS.rapid);
           break;
         case 'shield':
-          p.shieldTimer = 480;
+          p.shieldTimer = 10 * LOGIC_HZ;
           addFloatingText(game, p.x, p.y - 30, 'SHIELD', POWERUP_COLORS.shield);
           break;
         case 'missile':
-          p.missileTimer = 600;
+          p.missileTimer = 10 * LOGIC_HZ;
           addFloatingText(game, p.x, p.y - 30, 'HOMING MISSILES', POWERUP_COLORS.missile);
           break;
         case 'health':

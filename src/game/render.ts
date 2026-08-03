@@ -1,5 +1,5 @@
 import type { GameData, InputState, PowerUpType } from './types';
-import { CANVAS_W, CANVAS_H, COLORS, POWERUP_COLORS } from './engine';
+import { CANVAS_W, CANVAS_H, COLORS, POWERUP_COLORS, LOGIC_HZ } from './engine';
 import { isMuted } from './audio';
 
 // ---------- pre-rendered glow sprites (big perf win vs per-frame gradients) ----------
@@ -45,10 +45,10 @@ function getNebula(): HTMLCanvasElement {
     nebulaCanvas.height = CANVAS_H;
     const c = nebulaCanvas.getContext('2d')!;
     const blobs: [number, number, number, string][] = [
-      [120, 180, 170, '48,8,88'],
-      [370, 430, 190, '6,42,86'],
-      [190, 640, 150, '58,10,70'],
-      [410, 110, 130, '8,52,74'],
+      [120, 180, 170, '90,40,10'],
+      [370, 430, 190, '12,44,72'],
+      [190, 640, 150, '70,26,12'],
+      [410, 110, 130, '20,50,64'],
     ];
     for (const [x, y, r, col] of blobs) {
       const g = c.createRadialGradient(x, y, 0, x, y, r);
@@ -468,7 +468,7 @@ export function renderGame(
     }
 
     // Run stats
-    const mins = Math.floor(game.stats.time / 60);
+    const mins = Math.floor(game.stats.time / LOGIC_HZ);
     const secs = Math.floor(game.stats.time % 60).toString().padStart(2, '0');
     const acc = game.stats.shots > 0 ? Math.round((game.stats.hits / game.stats.shots) * 100) : 0;
     ctx.font = '14px monospace';
@@ -568,17 +568,17 @@ function renderHUD(ctx: CanvasRenderingContext2D, game: GameData) {
   }
   if (p.rapidTimer > 0) {
     ctx.fillStyle = COLORS.powerRapid;
-    ctx.fillText(`R:${Math.ceil(p.rapidTimer / 60)}`, iconX, CANVAS_H - 13);
+    ctx.fillText(`R:${Math.ceil(p.rapidTimer / LOGIC_HZ)}`, iconX, CANVAS_H - 13);
     iconX -= 42;
   }
   if (p.shieldTimer > 0) {
     ctx.fillStyle = COLORS.powerShield;
-    ctx.fillText(`SH:${Math.ceil(p.shieldTimer / 60)}`, iconX, CANVAS_H - 13);
+    ctx.fillText(`SH:${Math.ceil(p.shieldTimer / LOGIC_HZ)}`, iconX, CANVAS_H - 13);
     iconX -= 48;
   }
   if (p.missileTimer > 0) {
     ctx.fillStyle = COLORS.powerMissile;
-    ctx.fillText(`MS:${Math.ceil(p.missileTimer / 60)}`, iconX, CANVAS_H - 13);
+    ctx.fillText(`MS:${Math.ceil(p.missileTimer / LOGIC_HZ)}`, iconX, CANVAS_H - 13);
   }
 }
 
