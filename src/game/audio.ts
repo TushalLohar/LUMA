@@ -1,5 +1,6 @@
 // Tiny Web Audio synthesizer for game sounds + music — no external files needed
-import { AUDIO, STORAGE_KEYS } from './constants';
+const STORAGE_KEYS = { muted: 'novaBlasterMuted' } as const;
+const AUDIO = { musicIntervalMs: 500 } as const;
 
 let audioCtx: AudioContext | null = null;
 let muted: boolean | null = null;

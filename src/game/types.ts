@@ -115,10 +115,6 @@ export type GameState = 'menu' | 'playing' | 'paused' | 'gameover';
 
 export interface GameData {
   state: GameState;
-  /** Single endless mode. */
-  mode: 'classic';
-  /** Cosmetic ship id (see game/progress.ts). */
-  skin: number;
   score: number;
   wave: number;
   waveTimer: number;
