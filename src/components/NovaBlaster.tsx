@@ -1,18 +1,32 @@
-import { useCallback, useEffect, useRef, useState } from "react";
-import { createGameData, resetGame } from "@/game/engine";
+import { useEffect, useRef, useCallback } from "react";
+import {
+  createGameData,
+  resetGame,
+  updateGame,
+  CANVAS_W,
+  CANVAS_H,
+  LOGIC_HZ,
+} from "@/game/engine";
+import { renderGame } from "@/game/render";
 import type { GameData, InputState } from "@/game/types";
-import { useCanvas } from "@/hooks/useCanvas";
-import { useInputHandlers } from "@/hooks/useInputHandlers";
-import { useGameLoop } from "@/hooks/useGameLoop";
-import { initAudio } from "@/game/audio";
-import { hasSeenHelp, loadProgress, markHelpSeen, type Progress } from "@/game/progress";
-import { MenuOverlay } from "@/components/game/MenuOverlay";
-import { GameOverOverlay, type RunSummary } from "@/components/game/GameOverOverlay";
-import { HowToPlay } from "@/components/game/HowToPlay";
-import { GameHud } from "@/components/game/GameHud";
+import {
+  sfxShoot,
+  sfxExplosion,
+  sfxPowerUp,
+  sfxPlayerHit,
+  sfxGameOver,
+  sfxBoss,
+  initAudio,
+  toggleMute,
+  startMusic,
+  stopMusic,
+  closeAudio,
+} from "@/game/audio";
+
+const STEP_MS = 1000 / LOGIC_HZ;
 
 export default function NovaBlaster() {
-  const canvasRef = useCanvas();
+  const canvasRef = useRef<HTMLCanvasElement>(null);
   const gameRef = useRef<GameData>(createGameData());
   const inputRef = useRef<InputState>({
     left: false,
@@ -26,127 +40,282 @@ export default function NovaBlaster() {
     touchActive: false,
     touchFire: false,
   });
+  const rafRef = useRef<number>(0);
+  const lastTimeRef = useRef<number>(0);
+  const accRef = useRef<number>(0);
+  const prevBulletCount = useRef(0);
+  const prevKillCount = useRef(0);
+  const prevPlayerHp = useRef(3);
+  const prevPowerUpCount = useRef(0);
+  const prevState = useRef<string>("menu");
+  const prevBossWarning = useRef(0);
 
-  const [screen, setScreen] = useState<"menu" | "playing" | "paused" | "gameover">("menu");
-  const [progress, setProgress] = useState<Progress>({
-    runs: 0,
-    kills: 0,
-    bestScore: 0,
-    bestWave: 0,
-    totalTime: 0,
-  });
-  const [showHelp, setShowHelp] = useState(false);
-  const [run, setRun] = useState<RunSummary | null>(null);
-  const bestAtStart = useRef(0);
-
-  useInputHandlers(gameRef, inputRef, canvasRef);
-  useGameLoop(gameRef, inputRef, canvasRef);
-
-  // Hydrate local progression on the client only.
-  useEffect(() => {
-    setProgress(loadProgress());
-    if (!hasSeenHelp()) setShowHelp(true);
-    document.documentElement.classList.add("arcade-locked");
-    return () => document.documentElement.classList.remove("arcade-locked");
+  const getCanvasCoords = useCallback((clientX: number, clientY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return { x: 0, y: 0 };
+    const rect = canvas.getBoundingClientRect();
+    const pixelX = (clientX - rect.left) * (canvas.width / rect.width);
+    const pixelY = (clientY - rect.top) * (canvas.height / rect.height);
+    const scale = Math.min(canvas.width / CANVAS_W, canvas.height / CANVAS_H);
+    const offsetX = (canvas.width - CANVAS_W * scale) / 2;
+    const offsetY = (canvas.height - CANVAS_H * scale) / 2;
+    return { x: (pixelX - offsetX) / scale, y: (pixelY - offsetY) / scale };
   }, []);
 
-  const buildSummary = useCallback((game: GameData): RunSummary => {
-    const acc =
-      game.stats.shots > 0 ? Math.round((game.stats.hits / game.stats.shots) * 100) : 0;
-    return {
-      score: Math.round(game.score),
-      wave: game.wave + 1,
-      kills: game.stats.kills,
-      accuracy: acc,
-      bestCombo: game.stats.bestCombo,
-      time: game.stats.time,
-      mode: "classic",
-      skin: game.skin,
-      isPersonalBest: Math.round(game.score) > bestAtStart.current,
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d")!;
+
+    const resize = () => {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
     };
-  }, []);
+    resize();
+    window.addEventListener("resize", resize);
 
-  // Mirror the canvas game state into React so overlays can react to it.
-  useEffect(() => {
-    const id = window.setInterval(() => {
+    const keyDown = (e: KeyboardEvent) => {
+      const input = inputRef.current;
       const game = gameRef.current;
-      const next =
-        game.state === "gameover"
-          ? "gameover"
-          : game.state === "menu"
-            ? "menu"
-            : game.state === "paused"
-              ? "paused"
-              : "playing";
-      setScreen((prev) => {
-        if (prev === next) return prev;
-        if (next === "gameover") {
-          setRun(buildSummary(game));
-          setProgress(loadProgress());
+      switch (e.code) {
+        case "ArrowLeft":
+        case "KeyA":
+          input.left = true;
+          e.preventDefault();
+          break;
+        case "ArrowRight":
+        case "KeyD":
+          input.right = true;
+          e.preventDefault();
+          break;
+        case "ArrowUp":
+        case "KeyW":
+          input.up = true;
+          e.preventDefault();
+          break;
+        case "ArrowDown":
+        case "KeyS":
+          input.down = true;
+          e.preventDefault();
+          break;
+        case "Space":
+          input.fire = true;
+          e.preventDefault();
+          break;
+        case "KeyM":
+          initAudio();
+          toggleMute();
+          e.preventDefault();
+          break;
+        case "Escape":
+          if (game.state === "playing") game.state = "paused";
+          else if (game.state === "paused") game.state = "playing";
+          e.preventDefault();
+          break;
+        case "Enter":
+          if (game.state === "menu" || game.state === "gameover") {
+            initAudio();
+            resetGame(game);
+          } else if (game.state === "paused") {
+            game.state = "playing";
+          }
+          e.preventDefault();
+          break;
+      }
+    };
+
+    const keyUp = (e: KeyboardEvent) => {
+      const input = inputRef.current;
+      switch (e.code) {
+        case "ArrowLeft":
+        case "KeyA":
+          input.left = false;
+          break;
+        case "ArrowRight":
+        case "KeyD":
+          input.right = false;
+          break;
+        case "ArrowUp":
+        case "KeyW":
+          input.up = false;
+          break;
+        case "ArrowDown":
+        case "KeyS":
+          input.down = false;
+          break;
+        case "Space":
+          input.fire = false;
+          break;
+      }
+    };
+
+    /** Shared hit-zone handling for both touch and mouse. Returns true if consumed. */
+    const handlePointerDown = (x: number, y: number) => {
+      const game = gameRef.current;
+
+      // Sound toggle (top-right, left of pause) — active in every state
+      if (y < 70 && x > CANVAS_W - 115 && x <= CANVAS_W - 62) {
+        initAudio();
+        toggleMute();
+        return true;
+      }
+      // Pause button (top-right corner) while playing
+      if (game.state === "playing" && y < 70 && x > CANVAS_W - 60) {
+        game.state = "paused";
+        return true;
+      }
+      if (game.state === "menu" || game.state === "gameover") {
+        initAudio();
+        resetGame(game);
+        return true;
+      }
+      if (game.state === "paused") {
+        game.state = "playing";
+        return true;
+      }
+      return false;
+    };
+
+    const touchStart = (e: TouchEvent) => {
+      e.preventDefault();
+      const input = inputRef.current;
+      const touch = e.touches[0];
+      if (!touch) return;
+      const c = getCanvasCoords(touch.clientX, touch.clientY);
+      if (handlePointerDown(c.x, c.y)) return;
+      input.touchX = c.x;
+      input.touchY = c.y;
+      input.touchActive = true;
+    };
+
+    const touchMove = (e: TouchEvent) => {
+      e.preventDefault();
+      const input = inputRef.current;
+      const touch = e.touches[0];
+      if (touch) {
+        const c = getCanvasCoords(touch.clientX, touch.clientY);
+        input.touchX = c.x;
+        input.touchY = c.y;
+      }
+    };
+
+    const touchEnd = (e: TouchEvent) => {
+      e.preventDefault();
+      const input = inputRef.current;
+      input.touchActive = false;
+      input.touchX = null;
+      input.touchY = null;
+    };
+
+    const mouseDown = (e: MouseEvent) => {
+      const c = getCanvasCoords(e.clientX, e.clientY);
+      handlePointerDown(c.x, c.y);
+    };
+
+    window.addEventListener("keydown", keyDown);
+    window.addEventListener("keyup", keyUp);
+    canvas.addEventListener("touchstart", touchStart, { passive: false });
+    canvas.addEventListener("touchmove", touchMove, { passive: false });
+    canvas.addEventListener("touchend", touchEnd, { passive: false });
+    canvas.addEventListener("mousedown", mouseDown);
+
+    const stepIdleBackground = (game: GameData) => {
+      game.frameCount++;
+      for (const s of game.stars) {
+        s.y += s.speed * (game.state === "menu" ? 1 : 0.3);
+        if (s.y > CANVAS_H) {
+          s.y = -5;
+          s.x = Math.random() * CANVAS_W;
         }
-        return next;
-      });
-    }, 120);
-    return () => window.clearInterval(id);
-  }, [buildSummary]);
+      }
+      if (game.state === "gameover") {
+        for (let i = game.particles.length - 1; i >= 0; i--) {
+          const pt = game.particles[i]!;
+          pt.x += pt.vx * 0.3;
+          pt.y += pt.vy * 0.3;
+          pt.life -= 0.5;
+          pt.vx *= 0.98;
+          pt.vy *= 0.98;
+          if (pt.life <= 0) game.particles.splice(i, 1);
+        }
+      }
+    };
 
-  const play = useCallback(() => {
-    initAudio();
-    bestAtStart.current = loadProgress().bestScore;
-    resetGame(gameRef.current, "classic");
-    setScreen("playing");
-  }, []);
+    const gameLoop = (timestamp: number) => {
+      if (!lastTimeRef.current) lastTimeRef.current = timestamp;
+      const elapsed = Math.min(timestamp - lastTimeRef.current, 250);
+      lastTimeRef.current = timestamp;
+      accRef.current += elapsed;
 
-  const closeHelp = useCallback(() => {
-    markHelpSeen();
-    setShowHelp(false);
-  }, []);
+      const game = gameRef.current;
+      const input = inputRef.current;
 
-  const goMenu = useCallback(() => {
-    gameRef.current.state = "menu";
-    setScreen("menu");
-    setProgress(loadProgress());
-  }, []);
+      // Fixed timestep: identical pace on 60Hz, 120Hz or 144Hz displays.
+      let steps = 0;
+      while (accRef.current >= STEP_MS && steps < 8) {
+        accRef.current -= STEP_MS;
+        steps++;
+        if (game.state !== "playing") stepIdleBackground(game);
+        updateGame(game, input, STEP_MS);
+
+        if (game.state === "playing" || game.state === "gameover") {
+          if (game.bullets.length > prevBulletCount.current) sfxShoot();
+          if (game.stats.kills > prevKillCount.current) sfxExplosion();
+          if (game.player.hp < prevPlayerHp.current) sfxPlayerHit();
+          if (
+            game.powerUps.length < prevPowerUpCount.current &&
+            prevPowerUpCount.current > 0
+          )
+            sfxPowerUp();
+          if (game.bossWarning > 0 && prevBossWarning.current <= 0) sfxBoss();
+        }
+        if (game.state === "gameover" && prevState.current === "playing")
+          sfxGameOver();
+        if (game.state === "playing" && prevState.current !== "playing")
+          startMusic();
+        if (game.state !== "playing" && prevState.current === "playing")
+          stopMusic();
+
+        prevBulletCount.current = game.bullets.length;
+        prevKillCount.current = game.stats.kills;
+        prevPlayerHp.current = game.player.hp;
+        prevPowerUpCount.current = game.powerUps.length;
+        prevBossWarning.current = game.bossWarning;
+        prevState.current = game.state;
+      }
+      if (steps === 8) accRef.current = 0;
+
+      renderGame(ctx, game, canvas.width, canvas.height, input);
+      rafRef.current = requestAnimationFrame(gameLoop);
+    };
+
+    rafRef.current = requestAnimationFrame(gameLoop);
+
+    return () => {
+      cancelAnimationFrame(rafRef.current);
+      stopMusic();
+      closeAudio();
+      window.removeEventListener("keydown", keyDown);
+      window.removeEventListener("keyup", keyUp);
+      canvas.removeEventListener("touchstart", touchStart);
+      canvas.removeEventListener("touchmove", touchMove);
+      canvas.removeEventListener("touchend", touchEnd);
+      canvas.removeEventListener("mousedown", mouseDown);
+      window.removeEventListener("resize", resize);
+    };
+  }, [getCanvasCoords]);
 
   return (
-    <div className="dark fixed inset-0 overflow-hidden bg-background select-none touch-none">
-      <h1 className="sr-only">NOVA BLASTER — free arcade space shooter</h1>
+    <div className="fixed inset-0 overflow-hidden bg-background select-none touch-none">
+      <h1 className="sr-only">NOVA BLASTER — arcade space shooter</h1>
       <canvas
         ref={canvasRef}
         className="block h-full w-full"
         style={{ imageRendering: "pixelated" }}
       />
-
-      {(screen === "playing" || screen === "paused") && (
-        <GameHud
-          paused={screen === "paused"}
-          onPause={() => {
-            gameRef.current.state = "paused";
-            setScreen("paused");
-          }}
-          onResume={() => {
-            gameRef.current.state = "playing";
-            setScreen("playing");
-          }}
-          onRestart={play}
-          onMenu={goMenu}
-        />
-      )}
-
-      {screen === "menu" && !showHelp && (
-        <MenuOverlay
-          progress={progress}
-          onPlay={play}
-          onHowToPlay={() => setShowHelp(true)}
-        />
-      )}
-
-
-      {screen === "gameover" && run && (
-        <GameOverOverlay run={run} onPlayAgain={play} onMenu={goMenu} />
-      )}
-
-      {showHelp && <HowToPlay onClose={closeHelp} />}
     </div>
   );
 }
