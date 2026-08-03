@@ -81,16 +81,20 @@ export const SCREEN = {
   lowHpPulseSpeed: 0.1,
 } as const;
 
+// 78 logic steps per second (see useGameLoop) → 10 seconds = 780 steps.
+const TEN_SECONDS = 780;
+
 export const POWER_UPS = {
   dropChanceBase: 0.13,
   dropChancePerWave: 0.008,
   fallSpeed: 1.2,
   size: 16,
   pulseSpeed: 0.08,
-  rapidDuration: 600,
-  shieldDuration: 480,
-  missileDuration: 600,
+  rapidDuration: TEN_SECONDS,
+  shieldDuration: TEN_SECONDS,
+  missileDuration: TEN_SECONDS,
 } as const;
+
 
 export const BOSS = {
   width: 90,
