@@ -115,6 +115,10 @@ export type GameState = 'menu' | 'playing' | 'paused' | 'gameover';
 
 export interface GameData {
   state: GameState;
+  /** 'classic' = endless run, 'daily' = seeded daily challenge. */
+  mode: 'classic' | 'daily';
+  /** Cosmetic ship id (see game/progress.ts). */
+  skin: number;
   score: number;
   wave: number;
   waveTimer: number;

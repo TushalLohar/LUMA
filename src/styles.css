@@ -59,6 +59,13 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --color-arcade: var(--arcade);
+  --color-arcade-glow: var(--arcade-glow);
+  --color-arcade-pink: var(--arcade-pink);
+  --color-arcade-gold: var(--arcade-gold);
+  --color-arcade-surface: var(--arcade-surface);
+  --color-arcade-border: var(--arcade-border);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 :root {
@@ -143,10 +150,22 @@
   }
 }
 
-/* NOVA BLASTER full-screen canvas game */
+/* NOVA BLASTER arcade palette (shared by canvas + React chrome) */
+:root {
+  --arcade: oklch(0.83 0.14 205);
+  --arcade-glow: oklch(0.72 0.15 210);
+  --arcade-pink: oklch(0.7 0.22 2);
+  --arcade-gold: oklch(0.86 0.17 90);
+  --arcade-surface: oklch(0.16 0.04 275 / 0.88);
+  --arcade-border: oklch(0.83 0.14 205 / 0.35);
+}
+
+.arcade-locked {
+  overflow: hidden;
+}
+
 html,
 body {
-  overflow: hidden;
   background: #000;
   -webkit-tap-highlight-color: transparent;
   user-select: none;

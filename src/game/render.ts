@@ -1,6 +1,7 @@
 import type { GameData, InputState, PowerUpType } from './types';
 import { CANVAS_W, CANVAS_H, COLORS, POWERUP_COLORS } from './engine';
 import { isMuted } from './audio';
+import { shipById } from './progress';
 
 // ---------- pre-rendered glow sprites (big perf win vs per-frame gradients) ----------
 const glowCache = new Map<string, HTMLCanvasElement>();
@@ -157,7 +158,7 @@ export function renderGame(
 
   // Player glow + engine
   if (p.invincibleTimer <= 0 || Math.floor(game.frameCount / 3) % 2 === 0) {
-    drawGlow(ctx, COLORS.playerGlow, p.x, p.y, p.width * 1.1, 0.4);
+    drawGlow(ctx, shipById(game.skin).glow, p.x, p.y, p.width * 1.1, 0.4);
     const engPulse = 4 + Math.sin(game.frameCount * 0.3) * 2;
     const rad = p.tilt * Math.PI / 180;
     const cos = Math.cos(rad), sin = Math.sin(rad);
@@ -340,7 +341,7 @@ export function renderGame(
       ctx.globalAlpha = 1;
     }
 
-    ctx.fillStyle = COLORS.player;
+    ctx.fillStyle = shipById(game.skin).color;
     ctx.beginPath();
     ctx.moveTo(0, -p.height / 2);
     ctx.lineTo(-p.width / 2, p.height / 2);
@@ -441,58 +442,10 @@ export function renderGame(
     ctx.fillText('ESC or tap to resume', CANVAS_W / 2, CANVAS_H / 2 + 18);
   }
 
-  // Game over overlay
+  // Game over — dim only; the summary/leaderboard UI is rendered in React
   if (game.state === 'gameover') {
     ctx.fillStyle = 'rgba(0,0,0,0.72)';
     ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'alphabetic';
-
-    ctx.fillStyle = COLORS.enemy1;
-    ctx.font = 'bold 50px monospace';
-    ctx.fillText('GAME OVER', CANVAS_W / 2, 190);
-
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 26px monospace';
-    ctx.fillText(`SCORE  ${game.score.toLocaleString()}`, CANVAS_W / 2, 236);
-
-    if (game.highScores.length > 0 && game.score > 0 && game.score === game.highScores[0]) {
-      ctx.fillStyle = COLORS.bulletGlow;
-      ctx.font = 'bold 20px monospace';
-      const pulse = 1 + Math.sin(game.frameCount * 0.12) * 0.04;
-      ctx.save();
-      ctx.translate(CANVAS_W / 2, 268);
-      ctx.scale(pulse, pulse);
-      ctx.fillText('* NEW HIGH SCORE *', 0, 0);
-      ctx.restore();
-    }
-
-    // Run stats
-    const mins = Math.floor(game.stats.time / 60);
-    const secs = Math.floor(game.stats.time % 60).toString().padStart(2, '0');
-    const acc = game.stats.shots > 0 ? Math.round((game.stats.hits / game.stats.shots) * 100) : 0;
-    ctx.font = '14px monospace';
-    ctx.fillStyle = '#9ee8ff';
-    ctx.fillText(`TIME ${mins}:${secs}    KILLS ${game.stats.kills}`, CANVAS_W / 2, 306);
-    ctx.fillText(`BEST COMBO ${game.stats.bestCombo}x    ACCURACY ${acc}%`, CANVAS_W / 2, 328);
-
-    // High scores
-    ctx.fillStyle = COLORS.hud;
-    ctx.font = 'bold 17px monospace';
-    ctx.fillText('HIGH SCORES', CANVAS_W / 2, 380);
-    ctx.font = '14px monospace';
-    const displayScores = game.highScores.slice(0, 5);
-    for (let i = 0; i < displayScores.length; i++) {
-      ctx.fillStyle = i === 0 ? COLORS.bulletGlow : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#888';
-      ctx.fillText(`${i + 1}.  ${displayScores[i]!.toLocaleString()}`, CANVAS_W / 2, 408 + i * 23);
-    }
-
-    if (Math.sin(game.frameCount * 0.08) > 0) {
-      ctx.fillStyle = COLORS.player;
-      ctx.font = 'bold 19px monospace';
-      ctx.fillText('TAP OR PRESS ENTER', CANVAS_W / 2, 560);
-      ctx.fillText('TO RESTART', CANVAS_W / 2, 584);
-    }
   }
 
   // Vignette
@@ -553,7 +506,7 @@ function renderHUD(ctx: CanvasRenderingContext2D, game: GameData) {
 
   // HP pips
   for (let i = 0; i < p.maxHp; i++) {
-    ctx.fillStyle = i < p.hp ? (i < 2 ? COLORS.enemy1 : COLORS.player) : '#2a2a3a';
+    ctx.fillStyle = i < p.hp ? (i < 2 ? COLORS.enemy1 : shipById(game.skin).color) : '#2a2a3a';
     ctx.fillRect(12 + i * 22, CANVAS_H - 24, 18, 10);
   }
 
@@ -624,13 +577,13 @@ function renderMenu(ctx: CanvasRenderingContext2D, game: GameData) {
 
   // Glow behind the title
   ctx.globalCompositeOperation = 'lighter';
-  drawGlow(ctx, COLORS.player, CANVAS_W / 2, titleY - 10, 150, 0.35);
+  drawGlow(ctx, shipById(game.skin).color, CANVAS_W / 2, titleY - 10, 150, 0.35);
   ctx.globalCompositeOperation = 'source-over';
 
   ctx.fillStyle = '#fff';
   ctx.font = 'bold 58px monospace';
   ctx.fillText('NOVA', CANVAS_W / 2, titleY);
-  ctx.fillStyle = COLORS.player;
+  ctx.fillStyle = shipById(game.skin).color;
   ctx.fillText('BLASTER', CANVAS_W / 2, titleY + 54);
 
   ctx.fillStyle = COLORS.hud;
@@ -642,12 +595,12 @@ function renderMenu(ctx: CanvasRenderingContext2D, game: GameData) {
   // Demo ship
   const shipY = 320 + Math.sin(fc * 0.04) * 5;
   ctx.globalCompositeOperation = 'lighter';
-  drawGlow(ctx, COLORS.playerGlow, CANVAS_W / 2, shipY, 46, 0.5);
+  drawGlow(ctx, shipById(game.skin).glow, CANVAS_W / 2, shipY, 46, 0.5);
   ctx.globalCompositeOperation = 'source-over';
   ctx.save();
   ctx.translate(CANVAS_W / 2, shipY);
   ctx.scale(1.5, 1.5);
-  ctx.fillStyle = COLORS.player;
+  ctx.fillStyle = shipById(game.skin).color;
   ctx.beginPath();
   ctx.moveTo(0, -18);
   ctx.lineTo(-16, 18);
@@ -664,41 +617,6 @@ function renderMenu(ctx: CanvasRenderingContext2D, game: GameData) {
   ctx.fill();
   ctx.globalAlpha = 1;
   ctx.restore();
-
-  // Start prompt
-  if (Math.sin(fc * 0.06) > -0.3) {
-    ctx.fillStyle = '#fff';
-    ctx.font = 'bold 22px monospace';
-    ctx.fillText('PRESS ENTER OR TAP', CANVAS_W / 2, 425);
-    ctx.fillText('TO START', CANVAS_W / 2, 453);
-  }
-
-  // Controls
-  ctx.fillStyle = '#777';
-  ctx.font = '13px monospace';
-  ctx.fillText('WASD / ARROWS — Move    SPACE — Fire', CANVAS_W / 2, 516);
-  ctx.fillText('ESC — Pause    M — Sound', CANVAS_W / 2, 538);
-  ctx.fillText('TOUCH — Drag to fly, auto-fire', CANVAS_W / 2, 560);
-
-  // Boss teaser
-  ctx.fillStyle = COLORS.boss;
-  ctx.font = 'bold 12px monospace';
-  ctx.globalAlpha = 0.8 + Math.sin(fc * 0.1) * 0.2;
-  ctx.fillText('— BOSS EVERY 5 WAVES —', CANVAS_W / 2, 592);
-  ctx.globalAlpha = 1;
-
-  // High scores
-  if (game.highScores.length > 0) {
-    ctx.fillStyle = COLORS.hud;
-    ctx.font = 'bold 16px monospace';
-    ctx.fillText('HIGH SCORES', CANVAS_W / 2, 636);
-    ctx.font = '13px monospace';
-    const top = game.highScores.slice(0, 3);
-    for (let i = 0; i < top.length; i++) {
-      ctx.fillStyle = i === 0 ? COLORS.bulletGlow : '#888';
-      ctx.fillText(`${i + 1}.  ${top[i]!.toLocaleString()}`, CANVAS_W / 2, 660 + i * 20);
-    }
-  }
 
   // Sound icon on menu
   drawSoundIcon(ctx, CANVAS_W - 66, 51);

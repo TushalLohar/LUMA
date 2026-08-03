@@ -1,4 +1,6 @@
 import type { GameData, InputState, Player, Enemy, Particle, Star, Bullet, PowerUpType, EnemyType } from './types';
+import { dailyKey, type ScoreMode } from '@/lib/leaderboard-schema';
+import { loadSkin, recordRun } from './progress';
 import {
   CANVAS_W,
   CANVAS_H,
@@ -51,7 +53,41 @@ export const POWERUP_COLORS: Record<PowerUpType, string> = {
   missile: COLORS.powerMissile,
 };
 
+// ---------- deterministic RNG (used by the daily challenge) ----------
+let rngState = 0;
+let rngSeeded = false;
+
+/** Pass a seed for a reproducible run, or null for normal randomness. */
+export function setSeed(seed: number | null) {
+  if (seed === null) {
+    rngSeeded = false;
+    return;
+  }
+  rngSeeded = true;
+  rngState = (seed >>> 0) || 1;
+}
+
+/** mulberry32 when seeded, Math.random otherwise. */
+export function rnd(): number {
+  if (!rngSeeded) return Math.random();
+  rngState = (rngState + 0x6d2b79f5) >>> 0;
+  let t = rngState;
+  t = Math.imul(t ^ (t >>> 15), t | 1);
+  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+}
+
+export function seedFromString(text: string): number {
+  let h = 2166136261;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
 // ---------- storage ----------
+
 export function loadHighScores(): number[] {
   try {
     const data = localStorage.getItem(STORAGE_KEYS.highScores);
@@ -101,11 +137,11 @@ function createStars(): Star[] {
   const stars: Star[] = [];
   for (let i = 0; i < STARS.count; i++) {
     stars.push({
-      x: Math.random() * CANVAS_W,
-      y: Math.random() * CANVAS_H,
-      speed: STARS.minSpeed + Math.random() * (STARS.maxSpeed - STARS.minSpeed),
-      size: STARS.minSize + Math.random() * (STARS.maxSize - STARS.minSize),
-      brightness: 0.3 + Math.random() * 0.7,
+      x: rnd() * CANVAS_W,
+      y: rnd() * CANVAS_H,
+      speed: STARS.minSpeed + rnd() * (STARS.maxSpeed - STARS.minSpeed),
+      size: STARS.minSize + rnd() * (STARS.maxSize - STARS.minSize),
+      brightness: 0.3 + rnd() * 0.7,
     });
   }
   return stars;
@@ -114,6 +150,8 @@ function createStars(): Star[] {
 export function createGameData(): GameData {
   return {
     state: 'menu',
+    mode: 'classic',
+    skin: loadSkin(),
     score: 0,
     wave: 0,
     waveTimer: 0,
@@ -141,7 +179,10 @@ export function createGameData(): GameData {
   };
 }
 
-export function resetGame(game: GameData) {
+export function resetGame(game: GameData, mode: ScoreMode = 'classic') {
+  setSeed(mode === 'daily' ? seedFromString(`nova-${dailyKey()}`) : null);
+  game.mode = mode;
+  game.skin = loadSkin();
   // recycle live particles back into the pool
   for (const pt of game.particles) particlePool.push(pt);
 
@@ -174,18 +215,18 @@ const particlePool: Particle[] = [];
 function spawnParticles(game: GameData, x: number, y: number, count: number, type: Particle['type'], baseColor?: string) {
   if (game.particles.length > PARTICLES.maxCount) return;
   for (let i = 0; i < count; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = type === 'explosion' ? 1 + Math.random() * 4 : 0.4 + Math.random() * 2.2;
+    const angle = rnd() * Math.PI * 2;
+    const speed = type === 'explosion' ? 1 + rnd() * 4 : 0.4 + rnd() * 2.2;
     const p = particlePool.pop() ?? { x: 0, y: 0, vx: 0, vy: 0, life: 0, maxLife: 1, size: 1, color: '#fff', type: 'spark' as Particle['type'] };
     p.x = x; p.y = y;
     p.vx = Math.cos(angle) * speed;
     p.vy = Math.sin(angle) * speed;
     p.life = type === 'trail'
-      ? PARTICLES.trailLife + Math.random() * PARTICLES.trailLife
-      : PARTICLES.defaultLife + Math.random() * PARTICLES.lifeVariance;
+      ? PARTICLES.trailLife + rnd() * PARTICLES.trailLife
+      : PARTICLES.defaultLife + rnd() * PARTICLES.lifeVariance;
     p.maxLife = type === 'trail' ? PARTICLES.trailMaxLife : PARTICLES.defaultLife + PARTICLES.lifeVariance;
-    p.size = type === 'spark' ? 1 + Math.random() * 2 : 2 + Math.random() * 3.5;
-    p.color = baseColor || COLORS.explosion[(Math.random() * COLORS.explosion.length) | 0]!;
+    p.size = type === 'spark' ? 1 + rnd() * 2 : 2 + rnd() * 3.5;
+    p.color = baseColor || COLORS.explosion[(rnd() * COLORS.explosion.length) | 0]!;
     p.type = type;
     game.particles.push(p);
   }
@@ -264,7 +305,7 @@ function spawnEnemy(game: GameData) {
     ['kamikaze', Math.max(0, w - 1) * 3.5],
   ];
   const total = weights.reduce((a, b) => a + b[1], 0);
-  let r = Math.random() * total;
+  let r = rnd() * total;
   let type: EnemyType = 'basic';
   for (const [t, weight] of weights) {
     r -= weight;
@@ -272,7 +313,7 @@ function spawnEnemy(game: GameData) {
   }
 
   const cfg = ENEMY_CONFIGS[type];
-  const x = cfg.width / 2 + Math.random() * (CANVAS_W - cfg.width);
+  const x = cfg.width / 2 + rnd() * (CANVAS_W - cfg.width);
 
   game.enemies.push({
     x,
@@ -284,7 +325,7 @@ function spawnEnemy(game: GameData) {
     speed: cfg.speed + game.difficulty * 0.03,
     type,
     angle: 0,
-    shootTimer: 60 + Math.random() * cfg.shootInterval,
+    shootTimer: 60 + rnd() * cfg.shootInterval,
     shootInterval: Math.max(50, cfg.shootInterval - game.difficulty * 2),
     points: cfg.points,
     flash: 0,
@@ -359,7 +400,7 @@ const POWER_UP_WEIGHTS: { type: PowerUpType; threshold: number }[] = [
 ];
 
 function spawnRandomPowerUp(game: GameData, x: number, y: number) {
-  const roll = Math.random();
+  const roll = rnd();
   const type = POWER_UP_WEIGHTS.find((w) => roll < w.threshold)?.type ?? 'bomb';
   game.powerUps.push({ x, y, vy: POWER_UPS.fallSpeed, type, size: POWER_UPS.size, pulse: 0 });
 }
@@ -407,7 +448,7 @@ function killEnemy(game: GameData, i: number, e: Enemy) {
     spawnRandomPowerUp(game, e.x - 40, e.y);
     spawnRandomPowerUp(game, e.x, e.y + 10);
     spawnRandomPowerUp(game, e.x + 40, e.y);
-  } else if (Math.random() < POWER_UPS.dropChanceBase + game.wave * POWER_UPS.dropChancePerWave) {
+  } else if (rnd() < POWER_UPS.dropChanceBase + game.wave * POWER_UPS.dropChancePerWave) {
     spawnRandomPowerUp(game, e.x, e.y);
   }
 
@@ -488,7 +529,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
   if (p.invincibleTimer > 0) p.invincibleTimer -= timeScale;
 
   if (game.frameCount % 3 === 0) {
-    spawnParticles(game, p.x + (Math.random() - 0.5) * 8, p.y + p.height / 2, 1, 'trail', COLORS.playerGlow);
+    spawnParticles(game, p.x + (rnd() - 0.5) * 8, p.y + p.height / 2, 1, 'trail', COLORS.playerGlow);
   }
 
   // --- PLAYER BULLETS ---
@@ -765,14 +806,14 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
     s.y += s.speed * timeScale;
     if (s.y > CANVAS_H) {
       s.y = -5;
-      s.x = Math.random() * CANVAS_W;
+      s.x = rnd() * CANVAS_W;
     }
   }
 
   // --- SCREEN SHAKE DECAY ---
   if (game.screenShake > 0) {
     game.screenShake *= SCREEN.shakeDecay;
-    game.screenShakeAngle = Math.random() * Math.PI * 2;
+    game.screenShakeAngle = rnd() * Math.PI * 2;
     if (game.screenShake < SCREEN.shakeMin) game.screenShake = 0;
   }
 }
@@ -782,6 +823,8 @@ function gameOver(game: GameData) {
   game.screenShake = 25;
   game.slowMotion = 0;
   spawnParticles(game, game.player.x, game.player.y, 45, 'explosion');
+
+  recordRun({ score: game.score, wave: game.wave + 1, kills: game.stats.kills, time: game.stats.time });
 
   game.highScores.push(Math.round(game.score));
   game.highScores.sort((a, b) => b - a);
