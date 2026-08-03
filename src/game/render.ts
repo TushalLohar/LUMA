@@ -294,7 +294,7 @@ export function renderGame(
       ctx.closePath();
       ctx.fill();
       ctx.rotate(-e.angle * 2.2);
-      ctx.fillStyle = e.flash > 0 ? '#fff' : '#8e24aa';
+      ctx.fillStyle = e.flash > 0 ? '#fff' : '#7c1d6f';
       ctx.beginPath();
       for (let a = 0; a < 6; a++) {
         const ang = (a / 6) * Math.PI * 2;
@@ -472,7 +472,7 @@ export function renderGame(
     const secs = Math.floor(game.stats.time % 60).toString().padStart(2, '0');
     const acc = game.stats.shots > 0 ? Math.round((game.stats.hits / game.stats.shots) * 100) : 0;
     ctx.font = '14px monospace';
-    ctx.fillStyle = '#9ee8ff';
+    ctx.fillStyle = '#e8d9c0';
     ctx.fillText(`TIME ${mins}:${secs}    KILLS ${game.stats.kills}`, CANVAS_W / 2, 306);
     ctx.fillText(`BEST COMBO ${game.stats.bestCombo}x    ACCURACY ${acc}%`, CANVAS_W / 2, 328);
 
@@ -540,7 +540,7 @@ function renderHUD(ctx: CanvasRenderingContext2D, game: GameData) {
       const bx = (CANVAS_W - bw) / 2;
       ctx.fillStyle = 'rgba(0,0,0,0.55)';
       ctx.fillRect(bx - 3, 44, bw + 6, 14);
-      ctx.fillStyle = '#400060';
+      ctx.fillStyle = '#3a1200';
       ctx.fillRect(bx, 47, bw, 8);
       ctx.fillStyle = COLORS.boss;
       ctx.fillRect(bx, 47, bw * Math.max(0, boss.hp / boss.maxHp), 8);
@@ -553,7 +553,7 @@ function renderHUD(ctx: CanvasRenderingContext2D, game: GameData) {
 
   // HP pips
   for (let i = 0; i < p.maxHp; i++) {
-    ctx.fillStyle = i < p.hp ? (i < 2 ? COLORS.enemy1 : COLORS.player) : '#2a2a3a';
+    ctx.fillStyle = i < p.hp ? (i < 2 ? COLORS.enemy1 : COLORS.player) : '#2a2118';
     ctx.fillRect(12 + i * 22, CANVAS_H - 24, 18, 10);
   }
 
