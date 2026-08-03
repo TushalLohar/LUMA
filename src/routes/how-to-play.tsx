@@ -4,7 +4,7 @@ import { SHIPS } from "@/game/progress";
 
 const title = "How to Play NOVA BLASTER — Controls, Power-Ups & Combos";
 const description =
-  "Learn the NOVA BLASTER controls, power-ups, combo scoring, boss waves and daily challenge rules so you can climb the leaderboard.";
+  "Learn the NOVA BLASTER controls, power-ups, combo scoring and boss waves so you can climb the global leaderboard.";
 const url = "https://play-muse-machine.lovable.app/how-to-play";
 
 const POWER_UPS = [
@@ -89,8 +89,8 @@ function HowToPlayPage() {
             waves and is worth a large point bonus.
           </p>
           <p className="mt-3">
-            The daily challenge uses the same enemy sequence for everyone on that day, so it is a
-            fair skill race — one board per day.
+            Every run is endless: waves keep escalating until you lose your last hull point, and the
+            score you finish with is the one that goes on the global board.
           </p>
         </section>
 

@@ -58,7 +58,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      submit_score: {
+        Args: {
+          _accuracy: number
+          _best_combo: number
+          _kills: number
+          _score: number
+          _tag: string
+          _wave: number
+        }
+        Returns: {
+          rank: number
+          total: number
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

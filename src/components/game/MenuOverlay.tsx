@@ -1,8 +1,7 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { LeaderboardTable } from "@/components/LeaderboardTable";
 import { SHIPS, type Progress } from "@/game/progress";
-import { dailyKey } from "@/lib/leaderboard-schema";
+import { ShipMark } from "@/components/game/ShipMark";
 import { cn } from "@/lib/utils";
 
 export function MenuOverlay({
@@ -15,43 +14,61 @@ export function MenuOverlay({
   progress: Progress;
   skin: number;
   onSelectSkin: (id: number) => void;
-  onPlay: (mode: "classic" | "daily") => void;
+  onPlay: () => void;
   onHowToPlay: () => void;
 }) {
-  const [board, setBoard] = useState<"classic" | "daily">("classic");
+  const [showBoard, setShowBoard] = useState(false);
 
   return (
-    <div className="pointer-events-none absolute inset-0 z-20 flex justify-center overflow-y-auto">
-      <div className="pointer-events-auto mt-[42vh] w-full max-w-[420px] px-4 pb-8 font-mono">
-        <div className="flex flex-col gap-2">
-          <Button
-            size="lg"
-            onClick={() => onPlay("classic")}
-            className="h-12 w-full text-base font-bold tracking-[0.2em]"
-          >
-            PLAY ENDLESS
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            onClick={() => onPlay("daily")}
-            className="h-11 w-full border-arcade-border bg-arcade-surface text-sm tracking-[0.15em] text-arcade hover:bg-arcade-surface"
-          >
-            DAILY CHALLENGE · {dailyKey().slice(5)}
-          </Button>
+    <div className="absolute inset-0 z-20 flex justify-center overflow-y-auto bg-gradient-to-b from-black/80 via-black/55 to-black/90 backdrop-blur-[2px]">
+      <div className="w-full max-w-[440px] px-5 py-10">
+        <p className="font-mono text-[10px] tracking-[0.45em] text-arcade/70">SECTOR 09 // LIVE</p>
+        <h2 className="mt-2 font-display text-[3.25rem] leading-[0.85] font-bold tracking-tight text-foreground uppercase">
+          Nova
+          <br />
+          <span className="text-arcade">Blaster</span>
+        </h2>
+        <div className="mt-3 h-px w-full bg-gradient-to-r from-arcade via-arcade/30 to-transparent" />
+        <p className="mt-3 max-w-[22rem] font-mono text-[11px] leading-relaxed tracking-wide text-foreground/60">
+          One ship. Endless waves. Chain kills for a combo multiplier and get your tag on the board.
+        </p>
+
+        <button
+          onClick={onPlay}
+          className="group mt-6 flex w-full items-center justify-between border border-arcade/60 bg-arcade px-5 py-4 text-left transition hover:bg-arcade-glow"
+        >
+          <span className="font-display text-xl font-bold tracking-[0.15em] text-black uppercase">
+            Launch
+          </span>
+          <span className="font-mono text-[10px] tracking-[0.25em] text-black/70">ENTER</span>
+        </button>
+
+        <div className="mt-2 flex gap-2">
           <button
             onClick={onHowToPlay}
-            className="mx-auto mt-1 text-[11px] tracking-widest text-arcade/70 underline-offset-4 hover:underline"
+            className="flex-1 border border-arcade-border bg-arcade-surface px-3 py-2.5 font-mono text-[10px] tracking-[0.2em] text-foreground/80 transition hover:border-arcade/60"
           >
             HOW TO PLAY
           </button>
+          <button
+            onClick={() => setShowBoard((v) => !v)}
+            className="flex-1 border border-arcade-border bg-arcade-surface px-3 py-2.5 font-mono text-[10px] tracking-[0.2em] text-foreground/80 transition hover:border-arcade/60"
+          >
+            {showBoard ? "HIDE BOARD" : "LEADERBOARD"}
+          </button>
         </div>
 
-        <div className="mt-5 rounded-lg border border-arcade-border bg-arcade-surface p-3">
-          <p className="mb-2 text-center text-[10px] tracking-[0.2em] text-arcade/70">SHIP</p>
-          <div className="flex justify-center gap-2">
+        <div className="mt-5 border border-arcade-border bg-arcade-surface">
+          <div className="flex items-center justify-between border-b border-arcade-border/60 px-3 py-2">
+            <span className="font-mono text-[10px] tracking-[0.3em] text-arcade/70">HANGAR</span>
+            <span className="font-mono text-[10px] text-foreground/50">
+              {SHIPS.filter((s) => progress.kills >= s.unlockAt).length}/{SHIPS.length}
+            </span>
+          </div>
+          <div className="grid grid-cols-4 gap-px bg-arcade-border/40">
             {SHIPS.map((ship) => {
               const locked = progress.kills < ship.unlockAt;
+              const active = skin === ship.id;
               return (
                 <button
                   key={ship.id}
@@ -59,40 +76,52 @@ export function MenuOverlay({
                   onClick={() => onSelectSkin(ship.id)}
                   title={locked ? `${ship.unlockAt} lifetime kills to unlock` : ship.name}
                   className={cn(
-                    "flex h-11 w-11 items-center justify-center rounded-md border text-[10px] transition",
-                    skin === ship.id ? "border-arcade" : "border-arcade-border/50",
-                    locked && "opacity-35",
+                    "flex flex-col items-center gap-1 bg-black/60 px-1 py-3 transition",
+                    active && "bg-arcade/15",
+                    locked && "opacity-40",
                   )}
-                  style={{ color: ship.color }}
                 >
-                  {locked ? `${ship.unlockAt}` : "▲"}
+                  <ShipMark
+                    skin={ship.id}
+                    color={locked ? "#6b6b6b" : ship.color}
+                    className="h-7 w-7"
+                  />
+                  <span
+                    className={cn(
+                      "font-mono text-[8px] tracking-[0.1em]",
+                      active ? "text-arcade" : "text-foreground/50",
+                    )}
+                  >
+                    {locked ? `${ship.unlockAt} K` : ship.name.split(" ")[0]}
+                  </span>
                 </button>
               );
             })}
           </div>
-          <p className="mt-2 text-center text-[10px] text-foreground/60">
-            RUNS {progress.runs} · BEST {progress.bestScore.toLocaleString()} · KILLS{" "}
-            {progress.kills}
-          </p>
+          <dl className="grid grid-cols-3 divide-x divide-arcade-border/40 border-t border-arcade-border/60">
+            {[
+              ["RUNS", progress.runs.toLocaleString()],
+              ["BEST", progress.bestScore.toLocaleString()],
+              ["KILLS", progress.kills.toLocaleString()],
+            ].map(([label, value]) => (
+              <div key={label} className="px-3 py-2">
+                <dt className="font-mono text-[9px] tracking-[0.2em] text-foreground/45">
+                  {label}
+                </dt>
+                <dd className="font-display text-base font-bold tabular-nums text-foreground">
+                  {value}
+                </dd>
+              </div>
+            ))}
+          </dl>
         </div>
 
-        <div className="mt-4 rounded-lg border border-arcade-border bg-arcade-surface p-3">
-          <div className="mb-2 flex justify-center gap-2 text-[10px] tracking-[0.2em]">
-            {(["classic", "daily"] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setBoard(m)}
-                className={cn(
-                  "rounded px-2 py-1",
-                  board === m ? "bg-arcade/20 text-arcade" : "text-foreground/50",
-                )}
-              >
-                {m === "classic" ? "ALL TIME" : "TODAY"}
-              </button>
-            ))}
+        {showBoard && (
+          <div className="mt-3 border border-arcade-border bg-arcade-surface p-3">
+            <p className="mb-2 font-mono text-[10px] tracking-[0.3em] text-arcade/70">TOP PILOTS</p>
+            <LeaderboardTable limit={8} />
           </div>
-          <LeaderboardTable mode={board} limit={5} />
-        </div>
+        )}
       </div>
     </div>
   );
