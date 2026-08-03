@@ -696,7 +696,7 @@ function renderMenu(ctx: CanvasRenderingContext2D, game: GameData) {
     const top = game.highScores.slice(0, 3);
     for (let i = 0; i < top.length; i++) {
       ctx.fillStyle = i === 0 ? COLORS.bulletGlow : '#888';
-      ctx.fillText(`${i + 1}.  ${top[i].toLocaleString()}`, CANVAS_W / 2, 660 + i * 20);
+      ctx.fillText(`${i + 1}.  ${top[i]!.toLocaleString()}`, CANVAS_W / 2, 660 + i * 20);
     }
   }
 

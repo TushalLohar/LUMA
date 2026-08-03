@@ -55,7 +55,7 @@ export function saveHighScores(scores: number[]) {
 
 // ---------- helpers ----------
 function swapRemove<T>(arr: T[], i: number) {
-  arr[i] = arr[arr.length - 1];
+  arr[i] = arr[arr.length - 1]!;
   arr.pop();
 }
 
@@ -170,7 +170,7 @@ function spawnParticles(game: GameData, x: number, y: number, count: number, typ
     p.life = type === 'trail' ? 10 + Math.random() * 10 : 15 + Math.random() * 22;
     p.maxLife = type === 'trail' ? 20 : 37;
     p.size = type === 'spark' ? 1 + Math.random() * 2 : 2 + Math.random() * 3.5;
-    p.color = baseColor || COLORS.explosion[(Math.random() * COLORS.explosion.length) | 0];
+    p.color = baseColor || COLORS.explosion[(Math.random() * COLORS.explosion.length) | 0]!;
     p.type = type;
     game.particles.push(p);
   }
