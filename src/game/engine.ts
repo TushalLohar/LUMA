@@ -1,5 +1,4 @@
 import type { GameData, InputState, Player, Enemy, Particle, Star, Bullet, PowerUpType, EnemyType } from './types';
-import type { ScoreMode } from '@/lib/leaderboard-schema';
 import { loadSkin, recordRun } from './progress';
 import {
   CANVAS_W,
@@ -179,7 +178,7 @@ export function createGameData(): GameData {
   };
 }
 
-export function resetGame(game: GameData, mode: ScoreMode = 'classic') {
+export function resetGame(game: GameData, mode: 'classic' = 'classic') {
   setSeed(null);
   game.mode = mode;
   game.skin = loadSkin();

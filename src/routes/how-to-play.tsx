@@ -4,7 +4,7 @@ import { SHIPS } from "@/game/progress";
 
 const title = "How to Play NOVA BLASTER — Controls, Power-Ups & Combos";
 const description =
-  "Learn the NOVA BLASTER controls, power-ups, combo scoring and boss waves so you can climb the global leaderboard.";
+  "Learn the NOVA BLASTER controls, power-ups, combo scoring and boss waves so you can push your best run further.";
 const url = "https://play-muse-machine.lovable.app/how-to-play";
 
 const POWER_UPS = [
@@ -115,9 +115,6 @@ function HowToPlayPage() {
         <div className="mt-8 flex justify-center gap-4 text-xs tracking-widest">
           <Link to="/" className="text-arcade underline-offset-4 hover:underline">
             PLAY NOW
-          </Link>
-          <Link to="/leaderboard" className="text-foreground/60 underline-offset-4 hover:underline">
-            LEADERBOARD
           </Link>
         </div>
       </article>

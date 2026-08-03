@@ -7,12 +7,14 @@ import {
 } from '@/game/audio';
 import type { GameData, InputState } from '@/game/types';
 
-/** The engine is tuned for 60 logic steps per second; we drive it with a
- *  fixed-timestep accumulator so gameplay speed is identical on 60Hz,
- *  120Hz or 144Hz displays (and when a laptop throttles the refresh rate). */
-const STEP_MS = 1000 / 60;
-const MAX_STEPS_PER_FRAME = 5;
+/** Fixed-timestep accumulator so gameplay speed is identical on 60Hz,
+ *  120Hz or 144Hz displays (and when a laptop throttles the refresh rate).
+ *  LOGIC_HZ above 60 makes the whole game proportionally faster/snappier. */
+const LOGIC_HZ = 78;
+const STEP_MS = 1000 / LOGIC_HZ;
+const MAX_STEPS_PER_FRAME = 6;
 const MAX_DT_MS = 250;
+
 
 export function useGameLoop(
   gameRef: React.MutableRefObject<GameData>,
