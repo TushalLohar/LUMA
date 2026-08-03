@@ -468,7 +468,7 @@ export function renderGame(
     }
 
     // Run stats
-    const mins = Math.floor(game.stats.time / LOGIC_HZ);
+    const mins = Math.floor(game.stats.time / 60);
     const secs = Math.floor(game.stats.time % 60).toString().padStart(2, '0');
     const acc = game.stats.shots > 0 ? Math.round((game.stats.hits / game.stats.shots) * 100) : 0;
     ctx.font = '14px monospace';
