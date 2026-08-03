@@ -210,6 +210,13 @@ export default function NovaBlaster() {
     const touchEnd = (e: TouchEvent) => {
       e.preventDefault();
       const input = inputRef.current;
+      const remaining = e.touches[0];
+      if (remaining) {
+        const c = getCanvasCoords(remaining.clientX, remaining.clientY);
+        input.touchX = c.x;
+        input.touchY = c.y;
+        return;
+      }
       input.touchActive = false;
       input.touchX = null;
       input.touchY = null;
@@ -220,12 +227,22 @@ export default function NovaBlaster() {
       handlePointerDown(c.x, c.y);
     };
 
+    // Auto-pause when the phone locks / the tab is backgrounded.
+    const visibility = () => {
+      if (document.hidden && gameRef.current.state === "playing") {
+        gameRef.current.state = "paused";
+        stopMusic();
+      }
+    };
+
     window.addEventListener("keydown", keyDown);
     window.addEventListener("keyup", keyUp);
     canvas.addEventListener("touchstart", touchStart, { passive: false });
     canvas.addEventListener("touchmove", touchMove, { passive: false });
     canvas.addEventListener("touchend", touchEnd, { passive: false });
+    canvas.addEventListener("touchcancel", touchEnd, { passive: false });
     canvas.addEventListener("mousedown", mouseDown);
+    document.addEventListener("visibilitychange", visibility);
 
     const stepIdleBackground = (game: GameData) => {
       game.frameCount++;
