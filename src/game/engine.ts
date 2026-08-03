@@ -68,7 +68,7 @@ export function saveHighScores(scores: number[]) {
 
 // ---------- helpers ----------
 function swapRemove<T>(arr: T[], i: number) {
-  arr[i] = arr[arr.length - 1];
+  arr[i] = arr[arr.length - 1]!;
   arr.pop();
 }
 
@@ -185,7 +185,7 @@ function spawnParticles(game: GameData, x: number, y: number, count: number, typ
       : PARTICLES.defaultLife + Math.random() * PARTICLES.lifeVariance;
     p.maxLife = type === 'trail' ? PARTICLES.trailMaxLife : PARTICLES.defaultLife + PARTICLES.lifeVariance;
     p.size = type === 'spark' ? 1 + Math.random() * 2 : 2 + Math.random() * 3.5;
-    p.color = baseColor || COLORS.explosion[(Math.random() * COLORS.explosion.length) | 0];
+    p.color = baseColor || COLORS.explosion[(Math.random() * COLORS.explosion.length) | 0]!;
     p.type = type;
     game.particles.push(p);
   }
@@ -493,7 +493,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- PLAYER BULLETS ---
   for (let i = game.bullets.length - 1; i >= 0; i--) {
-    const b = game.bullets[i];
+    const b = game.bullets[i]!;
 
     if (b.homing) {
       // steer toward nearest enemy
@@ -530,7 +530,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- ENEMY BULLETS ---
   for (let i = game.enemyBullets.length - 1; i >= 0; i--) {
-    const b = game.enemyBullets[i];
+    const b = game.enemyBullets[i]!;
     b.x += b.vx * timeScale;
     b.y += b.vy * timeScale;
     const pad = ENEMY_BULLETS.boundsPadding;
@@ -579,7 +579,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- ENEMIES ---
   for (let i = game.enemies.length - 1; i >= 0; i--) {
-    const e = game.enemies[i];
+    const e = game.enemies[i]!;
     if (e.flash > 0) e.flash -= 1;
 
     if (e.type === 'boss') {
@@ -656,7 +656,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
     // Bullet collision
     let dead = false;
     for (let j = game.bullets.length - 1; j >= 0; j--) {
-      const b = game.bullets[j];
+      const b = game.bullets[j]!;
       if (rectsOverlap(b.x, b.y, b.width, b.height, e.x, e.y, e.width, e.height)) {
         e.hp -= b.damage;
         e.flash = 4;
@@ -694,7 +694,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- POWER UPS ---
   for (let i = game.powerUps.length - 1; i >= 0; i--) {
-    const pw = game.powerUps[i];
+    const pw = game.powerUps[i]!;
     pw.y += pw.vy * timeScale;
     pw.pulse += POWER_UPS.pulseSpeed;
     if (pw.y > CANVAS_H + 30) {
@@ -740,7 +740,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- FLOATING TEXTS ---
   for (let i = game.floatingTexts.length - 1; i >= 0; i--) {
-    const ft = game.floatingTexts[i];
+    const ft = game.floatingTexts[i]!;
     ft.y -= 1.1 * timeScale;
     ft.life -= timeScale;
     if (ft.life <= 0) swapRemove(game.floatingTexts, i);
@@ -748,7 +748,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- PARTICLES ---
   for (let i = game.particles.length - 1; i >= 0; i--) {
-    const pt = game.particles[i];
+    const pt = game.particles[i]!;
     pt.x += pt.vx * timeScale;
     pt.y += pt.vy * timeScale;
     pt.life -= timeScale;

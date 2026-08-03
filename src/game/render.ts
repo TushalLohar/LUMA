@@ -484,7 +484,7 @@ export function renderGame(
     const displayScores = game.highScores.slice(0, 5);
     for (let i = 0; i < displayScores.length; i++) {
       ctx.fillStyle = i === 0 ? COLORS.bulletGlow : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#888';
-      ctx.fillText(`${i + 1}.  ${displayScores[i].toLocaleString()}`, CANVAS_W / 2, 408 + i * 23);
+      ctx.fillText(`${i + 1}.  ${displayScores[i]!.toLocaleString()}`, CANVAS_W / 2, 408 + i * 23);
     }
 
     if (Math.sin(game.frameCount * 0.08) > 0) {
@@ -696,7 +696,7 @@ function renderMenu(ctx: CanvasRenderingContext2D, game: GameData) {
     const top = game.highScores.slice(0, 3);
     for (let i = 0; i < top.length; i++) {
       ctx.fillStyle = i === 0 ? COLORS.bulletGlow : '#888';
-      ctx.fillText(`${i + 1}.  ${top[i].toLocaleString()}`, CANVAS_W / 2, 660 + i * 20);
+      ctx.fillText(`${i + 1}.  ${top[i]!.toLocaleString()}`, CANVAS_W / 2, 660 + i * 20);
     }
   }
 
