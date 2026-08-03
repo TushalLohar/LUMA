@@ -12,3 +12,5 @@ Allow: /
 
 User-agent: *
 Allow: /
+
+Sitemap: https://play-muse-machine.lovable.app/sitemap.xml
