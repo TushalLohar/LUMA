@@ -325,8 +325,12 @@ export default function NovaBlaster() {
       canvas.removeEventListener("touchstart", touchStart);
       canvas.removeEventListener("touchmove", touchMove);
       canvas.removeEventListener("touchend", touchEnd);
+      canvas.removeEventListener("touchcancel", touchEnd);
       canvas.removeEventListener("mousedown", mouseDown);
+      document.removeEventListener("visibilitychange", visibility);
       window.removeEventListener("resize", resize);
+      window.removeEventListener("orientationchange", resize);
+      window.visualViewport?.removeEventListener("resize", resize);
     };
   }, [getCanvasCoords]);
 
