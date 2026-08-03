@@ -592,32 +592,6 @@ function renderMenu(ctx: CanvasRenderingContext2D, game: GameData) {
   ctx.fillText('DEFEND THE GALAXY', CANVAS_W / 2, titleY + 88);
   ctx.globalAlpha = 1;
 
-  // Demo ship
-  const shipY = 320 + Math.sin(fc * 0.04) * 5;
-  ctx.globalCompositeOperation = 'lighter';
-  drawGlow(ctx, shipById(game.skin).glow, CANVAS_W / 2, shipY, 46, 0.5);
-  ctx.globalCompositeOperation = 'source-over';
-  ctx.save();
-  ctx.translate(CANVAS_W / 2, shipY);
-  ctx.scale(1.5, 1.5);
-  ctx.fillStyle = shipById(game.skin).color;
-  ctx.beginPath();
-  ctx.moveTo(0, -18);
-  ctx.lineTo(-16, 18);
-  ctx.lineTo(-8, 12);
-  ctx.lineTo(0, 14);
-  ctx.lineTo(8, 12);
-  ctx.lineTo(16, 18);
-  ctx.closePath();
-  ctx.fill();
-  ctx.fillStyle = '#fff';
-  ctx.globalAlpha = 0.85;
-  ctx.beginPath();
-  ctx.arc(0, -2, 4, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.globalAlpha = 1;
-  ctx.restore();
-
   // Sound icon on menu
   drawSoundIcon(ctx, CANVAS_W - 66, 51);
 }

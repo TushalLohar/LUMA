@@ -22,7 +22,7 @@ export function MenuOverlay({
 
   return (
     <div className="pointer-events-none absolute inset-0 z-20 flex justify-center overflow-y-auto">
-      <div className="pointer-events-auto mt-[52%] w-full max-w-[420px] px-4 pb-8 font-mono">
+      <div className="pointer-events-auto mt-[42vh] w-full max-w-[420px] px-4 pb-8 font-mono">
         <div className="flex flex-col gap-2">
           <Button
             size="lg"
