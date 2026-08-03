@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useCallback, useEffect } from 'react';
 import { CANVAS_W, CANVAS_H, KEYS, UI } from '../game/constants';
 import { initAudio, toggleMute } from '../game/audio';
 import { resetGame } from '../game/engine';
