@@ -1,14 +1,8 @@
-import { useEffect, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
 import { toast } from "sonner";
-import { LeaderboardTable } from "@/components/LeaderboardTable";
 import { ShipMark } from "@/components/game/ShipMark";
-import { submitScore } from "@/lib/leaderboard.functions";
-import { submitScoreSchema } from "@/lib/leaderboard-schema";
-import { loadTag, saveTag, shipById } from "@/game/progress";
+import { shipById } from "@/game/progress";
 import { renderScoreCard, shareText } from "@/game/scoreCard";
-import { cn } from "@/lib/utils";
 
 export interface RunSummary {
   score: number;
@@ -31,44 +25,8 @@ export function GameOverOverlay({
   onPlayAgain: () => void;
   onMenu: () => void;
 }) {
-  const [tag, setTag] = useState(loadTag());
-  const [rank, setRank] = useState<{ rank: number; total: number } | null>(null);
-  const [saving, setSaving] = useState(false);
   const [sharing, setSharing] = useState(false);
-  const submit = useServerFn(submitScore);
-  const queryClient = useQueryClient();
   const ship = shipById(run.skin);
-
-  useEffect(() => {
-    setRank(null);
-  }, [run]);
-
-  const handleSubmit = async () => {
-    const parsed = submitScoreSchema.safeParse({
-      tag,
-      score: Math.round(run.score),
-      wave: run.wave,
-      kills: run.kills,
-      accuracy: run.accuracy,
-      bestCombo: run.bestCombo,
-    });
-    if (!parsed.success) {
-      toast.error("Enter a 3-character pilot tag (A-Z, 0-9).");
-      return;
-    }
-    setSaving(true);
-    try {
-      const result = await submit({ data: parsed.data });
-      saveTag(parsed.data.tag);
-      setRank(result);
-      await queryClient.invalidateQueries({ queryKey: ["scores"] });
-      toast.success(`Ranked #${result.rank} of ${result.total}`);
-    } catch {
-      toast.error("Could not save your score. Try again.");
-    } finally {
-      setSaving(false);
-    }
-  };
 
   const handleShare = async () => {
     setSharing(true);
@@ -82,9 +40,9 @@ export function GameOverOverlay({
         accuracy: run.accuracy,
         bestCombo: run.bestCombo,
         time: run.time,
-        tag: tag || "???",
+        tag: "PLT",
         skin: run.skin,
-        rank: rank?.rank ?? null,
+        rank: null,
         url,
       });
       const file = blob ? new File([blob], "nova-blaster-score.png", { type: "image/png" }) : null;
@@ -156,53 +114,6 @@ export function GameOverOverlay({
             </div>
           ))}
         </dl>
-
-        <div className="mt-4 border border-arcade-border bg-arcade-surface p-3">
-          {run.score <= 0 ? (
-            <p className="text-center font-mono text-[11px] text-foreground/55">
-              Score at least 1 point to join the board.
-            </p>
-          ) : rank ? (
-            <p className="text-center font-mono text-xs tracking-[0.2em] text-arcade">
-              RANKED #{rank.rank}{" "}
-              <span className="text-foreground/50">OF {rank.total.toLocaleString()}</span>
-            </p>
-          ) : (
-            <div className="flex items-end gap-2">
-              <div className="flex-1">
-                <label
-                  htmlFor="pilot-tag"
-                  className="mb-1 block font-mono text-[9px] tracking-[0.25em] text-arcade/70"
-                >
-                  PILOT TAG
-                </label>
-                <input
-                  id="pilot-tag"
-                  value={tag}
-                  maxLength={3}
-                  placeholder="AAA"
-                  onChange={(e) => setTag(e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, ""))}
-                  className="h-10 w-full border border-arcade-border bg-black/50 text-center font-mono text-lg tracking-[0.4em] text-foreground outline-none focus:border-arcade"
-                />
-              </div>
-              <button
-                onClick={handleSubmit}
-                disabled={saving || tag.length !== 3}
-                className={cn(
-                  "h-10 border border-arcade/60 bg-arcade px-4 font-mono text-[11px] tracking-[0.2em] text-black transition hover:bg-arcade-glow",
-                  (saving || tag.length !== 3) && "opacity-40",
-                )}
-              >
-                {saving ? "…" : "SUBMIT"}
-              </button>
-            </div>
-          )}
-
-          <div className="mt-3 border-t border-arcade-border/40 pt-3">
-            <p className="mb-1 font-mono text-[9px] tracking-[0.3em] text-arcade/70">TOP PILOTS</p>
-            <LeaderboardTable limit={5} />
-          </div>
-        </div>
 
         <button
           onClick={onPlayAgain}

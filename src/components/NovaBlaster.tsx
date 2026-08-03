@@ -151,12 +151,11 @@ export default function NovaBlaster() {
       {screen === "menu" && !showHelp && (
         <MenuOverlay
           progress={progress}
-          skin={skin}
-          onSelectSkin={selectSkin}
           onPlay={play}
           onHowToPlay={() => setShowHelp(true)}
         />
       )}
+
 
       {screen === "gameover" && run && (
         <GameOverOverlay run={run} onPlayAgain={play} onMenu={goMenu} />
