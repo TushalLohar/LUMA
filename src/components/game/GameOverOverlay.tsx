@@ -144,7 +144,11 @@ export function GameOverOverlay({
         </dl>
 
         <div className="mt-4 rounded-lg border border-arcade-border bg-arcade-surface p-3">
-          {rank ? (
+          {run.score <= 0 ? (
+            <p className="text-center text-xs text-foreground/60">
+              Score at least 1 point to join the leaderboard.
+            </p>
+          ) : rank ? (
             <p className="text-center text-sm text-arcade">
               RANKED #{rank.rank}{" "}
               <span className="text-foreground/60">of {rank.total.toLocaleString()}</span>
