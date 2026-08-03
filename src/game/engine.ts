@@ -253,7 +253,7 @@ function spawnEnemy(game: GameData) {
     if (r <= 0) { type = t; break; }
   }
 
-  const cfg = ENEMY_CONFIGS[type];
+  const cfg = ENEMY_CONFIGS[type]!;
   const x = cfg.width / 2 + Math.random() * (CANVAS_W - cfg.width);
 
   game.enemies.push({
@@ -472,7 +472,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- PLAYER BULLETS ---
   for (let i = game.bullets.length - 1; i >= 0; i--) {
-    const b = game.bullets[i];
+    const b = game.bullets[i]!;
 
     if (b.homing) {
       // steer toward nearest enemy
@@ -508,7 +508,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- ENEMY BULLETS ---
   for (let i = game.enemyBullets.length - 1; i >= 0; i--) {
-    const b = game.enemyBullets[i];
+    const b = game.enemyBullets[i]!;
     b.x += b.vx * timeScale;
     b.y += b.vy * timeScale;
     if (b.y > CANVAS_H + 20 || b.y < -20 || b.x < -20 || b.x > CANVAS_W + 20) {
@@ -554,7 +554,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- ENEMIES ---
   for (let i = game.enemies.length - 1; i >= 0; i--) {
-    const e = game.enemies[i];
+    const e = game.enemies[i]!;
     if (e.flash > 0) e.flash -= 1;
 
     if (e.type === 'boss') {
@@ -630,7 +630,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
     // Bullet collision
     let dead = false;
     for (let j = game.bullets.length - 1; j >= 0; j--) {
-      const b = game.bullets[j];
+      const b = game.bullets[j]!;
       if (rectsOverlap(b.x, b.y, b.width, b.height, e.x, e.y, e.width, e.height)) {
         e.hp -= b.damage;
         e.flash = 4;
@@ -668,7 +668,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- POWER UPS ---
   for (let i = game.powerUps.length - 1; i >= 0; i--) {
-    const pw = game.powerUps[i];
+    const pw = game.powerUps[i]!;
     pw.y += pw.vy * timeScale;
     pw.pulse += 0.08;
     if (pw.y > CANVAS_H + 30) {
@@ -714,7 +714,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- FLOATING TEXTS ---
   for (let i = game.floatingTexts.length - 1; i >= 0; i--) {
-    const ft = game.floatingTexts[i];
+    const ft = game.floatingTexts[i]!;
     ft.y -= 1.1 * timeScale;
     ft.life -= timeScale;
     if (ft.life <= 0) swapRemove(game.floatingTexts, i);
@@ -722,7 +722,7 @@ export function updateGame(game: GameData, input: InputState, dt: number) {
 
   // --- PARTICLES ---
   for (let i = game.particles.length - 1; i >= 0; i--) {
-    const pt = game.particles[i];
+    const pt = game.particles[i]!;
     pt.x += pt.vx * timeScale;
     pt.y += pt.vy * timeScale;
     pt.life -= timeScale;

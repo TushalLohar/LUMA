@@ -196,7 +196,7 @@ export function renderGame(
   ctx.textBaseline = 'middle';
   for (const pw of game.powerUps) {
     const pulseSize = pw.size + Math.sin(pw.pulse) * 2.5;
-    const color = POWERUP_COLORS[pw.type];
+    const color = POWERUP_COLORS[pw.type]!;
     ctx.fillStyle = color;
     ctx.beginPath();
     ctx.arc(pw.x, pw.y, pulseSize, 0, Math.PI * 2);
@@ -484,7 +484,7 @@ export function renderGame(
     const displayScores = game.highScores.slice(0, 5);
     for (let i = 0; i < displayScores.length; i++) {
       ctx.fillStyle = i === 0 ? COLORS.bulletGlow : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#888';
-      ctx.fillText(`${i + 1}.  ${displayScores[i].toLocaleString()}`, CANVAS_W / 2, 408 + i * 23);
+      ctx.fillText(`${i + 1}.  ${displayScores[i]!.toLocaleString()}`, CANVAS_W / 2, 408 + i * 23);
     }
 
     if (Math.sin(game.frameCount * 0.08) > 0) {
