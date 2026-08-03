@@ -5,14 +5,7 @@ import { useCanvas } from "@/hooks/useCanvas";
 import { useInputHandlers } from "@/hooks/useInputHandlers";
 import { useGameLoop } from "@/hooks/useGameLoop";
 import { initAudio } from "@/game/audio";
-import {
-  hasSeenHelp,
-  loadProgress,
-  loadSkin,
-  markHelpSeen,
-  saveSkin,
-  type Progress,
-} from "@/game/progress";
+import { hasSeenHelp, loadProgress, markHelpSeen, type Progress } from "@/game/progress";
 import { MenuOverlay } from "@/components/game/MenuOverlay";
 import { GameOverOverlay, type RunSummary } from "@/components/game/GameOverOverlay";
 import { HowToPlay } from "@/components/game/HowToPlay";
@@ -42,7 +35,6 @@ export default function NovaBlaster() {
     bestWave: 0,
     totalTime: 0,
   });
-  const [skin, setSkin] = useState(0);
   const [showHelp, setShowHelp] = useState(false);
   const [run, setRun] = useState<RunSummary | null>(null);
   const bestAtStart = useRef(0);
@@ -53,7 +45,6 @@ export default function NovaBlaster() {
   // Hydrate local progression on the client only.
   useEffect(() => {
     setProgress(loadProgress());
-    setSkin(loadSkin());
     if (!hasSeenHelp()) setShowHelp(true);
     document.documentElement.classList.add("arcade-locked");
     return () => document.documentElement.classList.remove("arcade-locked");
@@ -109,12 +100,6 @@ export default function NovaBlaster() {
   const closeHelp = useCallback(() => {
     markHelpSeen();
     setShowHelp(false);
-  }, []);
-
-  const selectSkin = useCallback((id: number) => {
-    saveSkin(id);
-    setSkin(id);
-    gameRef.current.skin = id;
   }, []);
 
   const goMenu = useCallback(() => {
