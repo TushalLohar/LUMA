@@ -162,7 +162,7 @@ function drawStormBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: 
   // near clouds
   for (let b = 0; b < 3; b++) {
     const y = ((fc * 0.42 + b * (CANVAS_H / 3)) % (CANVAS_H + 160)) - 80;
-    drawCloudBand(ctx, 200 + b * 17, y, 2.1, 0.08, '#0d2murky'.length ? '#123a63' : '#123a63');
+    drawCloudBand(ctx, 200 + b * 17, y, 2.1, 0.08, '#123a63');
   }
 
   // rain streaks
