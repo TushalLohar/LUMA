@@ -106,7 +106,7 @@ export const POWERUP_COLORS: Record<PowerUpType, string> = {
 
 const MAX_PARTICLES = 260;
 const MAX_ENEMY_BULLETS = 110;
-const POWERUP_DURATION = 5 * LOGIC_HZ;
+const POWERUP_DURATION = 8 * LOGIC_HZ;
 const PARTICLE_POOL: Particle[] = [];
 
 const ENEMY_CONFIG: Record<
