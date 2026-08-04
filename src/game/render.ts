@@ -817,11 +817,41 @@ export function renderGame(
       ctx.lineWidth = 1;
       continue;
     }
+    if (game.theme === 'spiderman' && !b.homing) {
+      // web-shot: white capsule with a spun web halo
+      ctx.fillStyle = b.color || tc.bullet;
+      ctx.beginPath();
+      ctx.ellipse(b.x, b.y, b.width * 0.7, b.height * 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(b.x - b.width, b.y);
+      ctx.lineTo(b.x + b.width, b.y);
+      ctx.moveTo(b.x, b.y - b.height * 0.7);
+      ctx.lineTo(b.x, b.y + b.height * 0.7);
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      continue;
+    }
+    if (game.theme === 'ironman' && !b.homing) {
+      // repulsor pulse
+      ctx.fillStyle = b.color || tc.bullet;
+      ctx.beginPath();
+      ctx.ellipse(b.x, b.y, b.width * 0.55, b.height * 0.62, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, Math.max(1, b.width * 0.28), 0, Math.PI * 2);
+      ctx.fill();
+      continue;
+    }
     ctx.fillStyle = b.color || tc.bullet;
     ctx.fillRect(b.x - b.width / 2, b.y - b.height / 2, b.width, b.height);
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(b.x - 1, b.y - b.height / 2, 2, b.height);
   }
+
 
 
   // Enemy bullets
