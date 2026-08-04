@@ -1,0 +1,1 @@
+REVOKE ALL ON FUNCTION public.submit_score(text, integer, integer, integer, integer, integer) FROM PUBLIC, anon, authenticated;

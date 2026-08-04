@@ -52,8 +52,161 @@ function getVignette(ctx: CanvasRenderingContext2D): CanvasGradient {
   return vignetteCache.grad;
 }
 
+// ---------- STORM LORD (thor) ATMOSPHERE ----------
+function hash(n: number) {
+  const s = Math.sin(n * 127.1) * 43758.5453;
+  return s - Math.floor(s);
+}
+
+function drawCloudBand(
+  ctx: CanvasRenderingContext2D,
+  seed: number,
+  y: number,
+  scale: number,
+  alpha: number,
+  color: string,
+) {
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = color;
+  for (let i = 0; i < 9; i++) {
+    const h = hash(seed + i);
+    const x = ((h * CANVAS_W * 1.4) + i * 37) % (CANVAS_W + 120) - 60;
+    const rx = (28 + h * 46) * scale;
+    const ry = rx * (0.34 + hash(seed + i + 90) * 0.2);
+    ctx.beginPath();
+    ctx.ellipse(x, y + hash(seed + i + 40) * 26 * scale, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawTemple(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, alpha: number) {
+  const h = w * 0.5;
+  ctx.globalAlpha = alpha;
+  ctx.fillStyle = '#091A33';
+  // floating rock base
+  ctx.beginPath();
+  ctx.moveTo(x - w / 2, y);
+  ctx.lineTo(x + w / 2, y);
+  ctx.lineTo(x + w * 0.18, y + h * 1.1);
+  ctx.lineTo(x - w * 0.22, y + h * 0.8);
+  ctx.closePath();
+  ctx.fill();
+  // temple body + pediment
+  ctx.fillRect(x - w * 0.3, y - h * 0.5, w * 0.6, h * 0.5);
+  ctx.beginPath();
+  ctx.moveTo(x - w * 0.38, y - h * 0.5);
+  ctx.lineTo(x, y - h * 0.9);
+  ctx.lineTo(x + w * 0.38, y - h * 0.5);
+  ctx.closePath();
+  ctx.fill();
+  // pillar gaps
+  ctx.fillStyle = 'rgba(63,169,255,0.16)';
+  for (let i = 0; i < 3; i++) {
+    ctx.fillRect(x - w * 0.22 + i * w * 0.18, y - h * 0.45, w * 0.05, h * 0.42);
+  }
+  ctx.globalAlpha = 1;
+}
+
+function drawBolt(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y0: number,
+  y1: number,
+  seed: number,
+  width: number,
+  alpha: number,
+) {
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = width;
+  ctx.beginPath();
+  ctx.moveTo(x, y0);
+  const steps = 9;
+  for (let i = 1; i <= steps; i++) {
+    const t = i / steps;
+    const jitter = (hash(seed + i) - 0.5) * 44 * (1 - t * 0.4);
+    ctx.lineTo(x + jitter, y0 + (y1 - y0) * t);
+  }
+  ctx.stroke();
+  ctx.strokeStyle = '#69F0FF';
+  ctx.lineWidth = width * 3;
+  ctx.globalAlpha = alpha * 0.25;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = 1;
+}
+
+function drawStormBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: ThemeColors) {
+  const fc = game.frameCount;
+  const bgGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+  bgGrad.addColorStop(0, tc.bgGradTop);
+  bgGrad.addColorStop(0.55, '#0a2244');
+  bgGrad.addColorStop(1, tc.bgGradBottom);
+  ctx.fillStyle = bgGrad;
+  ctx.fillRect(-12, -12, CANVAS_W + 24, CANVAS_H + 24);
+
+  // far storm clouds
+  for (let b = 0; b < 4; b++) {
+    const y = ((fc * 0.14 + b * (CANVAS_H / 4)) % (CANVAS_H + 140)) - 70;
+    drawCloudBand(ctx, b * 11 + 3, y, 1.5, 0.14, '#2b4a76');
+  }
+
+  // floating temples (mid background)
+  for (let t = 0; t < 3; t++) {
+    const y = ((fc * 0.22 + t * (CANVAS_H / 3)) % (CANVAS_H + 220)) - 110;
+    const x = 40 + hash(t * 7.3) * (CANVAS_W - 80);
+    drawTemple(ctx, x, y, 66 + hash(t * 3.1) * 44, 0.75);
+  }
+
+  // near clouds
+  for (let b = 0; b < 3; b++) {
+    const y = ((fc * 0.42 + b * (CANVAS_H / 3)) % (CANVAS_H + 160)) - 80;
+    drawCloudBand(ctx, 200 + b * 17, y, 2.1, 0.1, '#1b4b7d');
+  }
+
+  // rain streaks
+  ctx.strokeStyle = '#D8E5F0';
+  ctx.globalAlpha = 0.14;
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  for (const s of game.stars) {
+    const y = (s.y + fc * (2 + s.layer * 1.6)) % CANVAS_H;
+    ctx.moveTo(s.x, y);
+    ctx.lineTo(s.x + 2, y + 12 + s.layer * 5);
+  }
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+
+  // periodic background lightning + sky flash
+  const cycle = 190;
+  const phase = fc % cycle;
+  if (phase < 12) {
+    const strikeSeed = Math.floor(fc / cycle);
+    const fade = 1 - phase / 12;
+    ctx.fillStyle = '#3FA9FF';
+    ctx.globalAlpha = 0.09 * fade;
+    ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+    ctx.globalAlpha = 1;
+    drawBolt(
+      ctx,
+      30 + hash(strikeSeed) * (CANVAS_W - 60),
+      -10,
+      CANVAS_H * (0.45 + hash(strikeSeed + 5) * 0.4),
+      strikeSeed * 13,
+      1.6,
+      0.55 * fade,
+    );
+  }
+}
+
 // ---------- CLEAN THEME BACKGROUND EFFECTS ----------
 function drawThemeBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: ThemeColors) {
+  if (game.theme === 'thor') {
+    drawStormBackground(ctx, game, tc);
+    return;
+  }
+
   const bgGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
   bgGrad.addColorStop(0, tc.bgGradTop);
   bgGrad.addColorStop(1, tc.bgGradBottom);
@@ -81,6 +234,7 @@ function drawThemeBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: 
   }
   ctx.globalAlpha = 1;
 }
+
 
 // ---------- SLEEK PLAYER SHIP RENDERERS ----------
 
@@ -137,30 +291,70 @@ function drawIronManPlayer(ctx: CanvasRenderingContext2D, p: Player, fc: number,
 }
 
 function drawThorPlayer(ctx: CanvasRenderingContext2D, p: Player, fc: number, tc: ThemeColors) {
+  const w = p.width, h = p.height;
+  const pulse = 0.5 + 0.5 * Math.sin(fc * 0.14);
+
+  // outer wing blades (divine sky weapon)
+  ctx.fillStyle = '#F6C343';
+  for (const dir of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(dir * w * 0.16, -h * 0.34);
+    ctx.lineTo(dir * (w * 0.62 + 7), -h * 0.05);
+    ctx.lineTo(dir * (w * 0.52 + 4), h * 0.3);
+    ctx.lineTo(dir * w * 0.2, h * 0.12);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // inner wing plating
+  ctx.fillStyle = '#D8E5F0';
+  for (const dir of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(dir * w * 0.1, -h * 0.42);
+    ctx.lineTo(dir * w * 0.42, h * 0.02);
+    ctx.lineTo(dir * w * 0.16, h * 0.3);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // central hull
   ctx.fillStyle = tc.player;
   ctx.beginPath();
-  ctx.moveTo(0, -p.height / 2 - 4);
-  ctx.lineTo(-p.width / 2 - 6, p.height / 4);
-  ctx.lineTo(-p.width / 4, p.height / 2);
-  ctx.lineTo(0, p.height / 3);
-  ctx.lineTo(p.width / 4, p.height / 2);
-  ctx.lineTo(p.width / 2 + 6, p.height / 4);
+  ctx.moveTo(0, -h / 2 - 5);
+  ctx.lineTo(w * 0.16, -h * 0.1);
+  ctx.lineTo(w * 0.1, h * 0.42);
+  ctx.lineTo(0, h * 0.3);
+  ctx.lineTo(-w * 0.1, h * 0.42);
+  ctx.lineTo(-w * 0.16, -h * 0.1);
   ctx.closePath();
   ctx.fill();
 
-  ctx.fillStyle = '#e2e8f0';
+  // energy core
+  ctx.fillStyle = '#69F0FF';
+  ctx.globalAlpha = 0.55 + 0.35 * pulse;
   ctx.beginPath();
-  ctx.moveTo(0, -p.height / 2);
-  ctx.lineTo(-p.width / 4, p.height / 3);
-  ctx.lineTo(p.width / 4, p.height / 3);
-  ctx.closePath();
+  ctx.arc(0, -1, 6 + pulse * 2, 0, Math.PI * 2);
   ctx.fill();
-
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
-  ctx.arc(0, -2, 4, 0, Math.PI * 2);
+  ctx.arc(0, -1, 3, 0, Math.PI * 2);
   ctx.fill();
+
+  // thunder-stream propulsion bolt
+  ctx.strokeStyle = '#69F0FF';
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.5 + 0.4 * pulse;
+  ctx.beginPath();
+  ctx.moveTo(0, h * 0.4);
+  ctx.lineTo(-3, h * 0.58);
+  ctx.lineTo(2, h * 0.62);
+  ctx.lineTo(-1, h * 0.86);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = 1;
 }
+
 
 // ---------- SLEEK HIGH-TECH ENEMY RENDERERS ----------
 
@@ -400,12 +594,29 @@ export function renderGame(
   }
 
   // Player bullets
+  const stormShots = game.theme === 'thor';
   for (const b of game.bullets) {
+    if (stormShots && !b.homing) {
+      // lightning-bolt shot
+      const half = b.height / 2;
+      const j = ((b.y | 0) % 2 === 0 ? 1 : -1) * (b.width * 0.6);
+      ctx.strokeStyle = b.color || tc.bullet;
+      ctx.lineWidth = Math.max(1.5, b.width * 0.8);
+      ctx.beginPath();
+      ctx.moveTo(b.x, b.y - half);
+      ctx.lineTo(b.x + j, b.y - half * 0.3);
+      ctx.lineTo(b.x - j, b.y + half * 0.3);
+      ctx.lineTo(b.x, b.y + half);
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      continue;
+    }
     ctx.fillStyle = b.color || tc.bullet;
     ctx.fillRect(b.x - b.width / 2, b.y - b.height / 2, b.width, b.height);
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(b.x - 1, b.y - b.height / 2, 2, b.height);
   }
+
 
   // Enemy bullets
   for (const b of game.enemyBullets) {
