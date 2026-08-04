@@ -200,10 +200,172 @@ function drawStormBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: 
   }
 }
 
+// ---------- SPIDER-MAN: NIGHT CITY ----------
+function drawCityBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: ThemeColors) {
+  const fc = game.frameCount;
+  const g = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+  g.addColorStop(0, tc.bgGradTop);
+  g.addColorStop(0.6, '#0b0418');
+  g.addColorStop(1, tc.bgGradBottom);
+  ctx.fillStyle = g;
+  ctx.fillRect(-12, -12, CANVAS_W + 24, CANVAS_H + 24);
+
+  // web strands stretched from the corners
+  ctx.strokeStyle = '#ffffff';
+  ctx.globalAlpha = 0.05;
+  ctx.lineWidth = 1;
+  for (const [cx, cy] of [[0, 0], [CANVAS_W, 0], [0, CANVAS_H], [CANVAS_W, CANVAS_H]] as const) {
+    for (let i = 0; i < 7; i++) {
+      const a = (i / 6) * (Math.PI / 2);
+      const dx = cx === 0 ? Math.cos(a) : -Math.cos(a);
+      const dy = cy === 0 ? Math.sin(a) : -Math.sin(a);
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + dx * 300, cy + dy * 300);
+      ctx.stroke();
+    }
+    for (let r = 70; r <= 280; r += 70) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // scrolling skyline (two parallax layers of towers with lit windows)
+  const drawLayer = (speed: number, seed: number, alpha: number, wide: number, tall: number, shade: string) => {
+    const span = CANVAS_H + 260;
+    const shift = (fc * speed) % span;
+    for (let pass = 0; pass < 2; pass++) {
+      const baseY = shift - pass * span + CANVAS_H + 130;
+      for (let i = 0; i < 9; i++) {
+        const h1 = hash(seed + i);
+        const w = wide * (0.6 + h1 * 0.8);
+        const h = tall * (0.5 + hash(seed + i + 31) * 1.1);
+        const x = (i / 9) * CANVAS_W + h1 * 24 - 10;
+        const y = baseY - i * 0; // aligned band
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = shade;
+        ctx.fillRect(x, y - h, w, h);
+        // windows
+        ctx.fillStyle = tc.hud;
+        ctx.globalAlpha = alpha * 0.5;
+        for (let wy = y - h + 10; wy < y - 8; wy += 16) {
+          for (let wx = x + 5; wx < x + w - 6; wx += 12) {
+            if (hash(wx * 0.13 + wy * 0.37 + seed) > 0.55) ctx.fillRect(wx, wy, 4, 6);
+          }
+        }
+      }
+    }
+    ctx.globalAlpha = 1;
+  };
+  drawLayer(0.16, 5, 0.55, 46, 150, '#150726');
+  drawLayer(0.34, 88, 0.8, 62, 210, '#0a0314');
+
+  // city haze
+  const haze = ctx.createLinearGradient(0, CANVAS_H * 0.55, 0, CANVAS_H);
+  haze.addColorStop(0, 'rgba(255,42,85,0)');
+  haze.addColorStop(1, 'rgba(255,42,85,0.10)');
+  ctx.fillStyle = haze;
+  ctx.fillRect(0, CANVAS_H * 0.55, CANVAS_W, CANVAS_H * 0.45);
+
+  // drifting city lights
+  for (const s of game.stars) {
+    ctx.fillStyle = s.layer === 0 ? tc.bulletGlow : s.layer === 1 ? tc.hud : '#ffffff';
+    ctx.globalAlpha = s.brightness * 0.5 * (0.6 + 0.4 * Math.sin(fc * 0.03 + s.x));
+    ctx.fillRect(s.x, (s.y + fc * (0.2 + s.layer * 0.25)) % CANVAS_H, s.size, s.size);
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ---------- IRON MAN: HUD / FORGE ----------
+function drawIronBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: ThemeColors) {
+  const fc = game.frameCount;
+  const g = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+  g.addColorStop(0, tc.bgGradTop);
+  g.addColorStop(0.55, '#14030a');
+  g.addColorStop(1, tc.bgGradBottom);
+  ctx.fillStyle = g;
+  ctx.fillRect(-12, -12, CANVAS_W + 24, CANVAS_H + 24);
+
+  // hex mesh plating
+  ctx.strokeStyle = tc.player;
+  ctx.globalAlpha = 0.05;
+  ctx.lineWidth = 1;
+  const R = 26;
+  const yShift = (fc * 0.3) % (R * 1.5);
+  for (let row = -1; row * R * 1.5 < CANVAS_H + R * 2; row++) {
+    const cy = row * R * 1.5 + yShift;
+    for (let col = -1; col * R * 1.74 < CANVAS_W + R * 2; col++) {
+      const cx = col * R * 1.74 + (row % 2 ? R * 0.87 : 0);
+      ctx.beginPath();
+      for (let i = 0; i < 6; i++) {
+        const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
+        ctx.lineTo(cx + Math.cos(a) * R, cy + Math.sin(a) * R);
+      }
+      ctx.closePath();
+      ctx.stroke();
+    }
+  }
+  ctx.globalAlpha = 1;
+
+  // arc-reactor rings behind the action
+  const cx = CANVAS_W / 2, cy = CANVAS_H * 0.42;
+  ctx.globalAlpha = 0.16;
+  ctx.strokeStyle = tc.bulletGlow;
+  for (let i = 0; i < 4; i++) {
+    const r = 90 + i * 52 + Math.sin(fc * 0.02 + i) * 5;
+    ctx.lineWidth = i === 0 ? 2 : 1;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  // rotating reticle ticks
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.22;
+  ctx.strokeStyle = tc.player;
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2 + fc * 0.006;
+    const r0 = 150, r1 = 168;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+    ctx.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = 1;
+
+  // rising forge embers
+  for (const s of game.stars) {
+    const y = CANVAS_H - ((s.y + fc * (0.9 + s.layer * 0.8)) % (CANVAS_H + 40));
+    ctx.fillStyle = s.layer === 0 ? tc.missile : s.layer === 1 ? tc.player : tc.bulletGlow;
+    ctx.globalAlpha = s.brightness * 0.7;
+    ctx.fillRect(s.x + Math.sin(fc * 0.04 + s.x) * 3, y, s.size, s.size);
+  }
+  ctx.globalAlpha = 1;
+
+  // scanline sweep
+  const sweep = (fc * 1.6) % (CANVAS_H + 200) - 100;
+  const sg = ctx.createLinearGradient(0, sweep - 60, 0, sweep + 60);
+  sg.addColorStop(0, 'rgba(0,229,255,0)');
+  sg.addColorStop(0.5, 'rgba(0,229,255,0.06)');
+  sg.addColorStop(1, 'rgba(0,229,255,0)');
+  ctx.fillStyle = sg;
+  ctx.fillRect(0, sweep - 60, CANVAS_W, 120);
+}
+
 // ---------- CLEAN THEME BACKGROUND EFFECTS ----------
 function drawThemeBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: ThemeColors) {
   if (game.theme === 'thor') {
     drawStormBackground(ctx, game, tc);
+    return;
+  }
+  if (game.theme === 'spiderman') {
+    drawCityBackground(ctx, game, tc);
+    return;
+  }
+  if (game.theme === 'ironman') {
+    drawIronBackground(ctx, game, tc);
     return;
   }
 
@@ -213,20 +375,6 @@ function drawThemeBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: 
   ctx.fillStyle = bgGrad;
   ctx.fillRect(-12, -12, CANVAS_W + 24, CANVAS_H + 24);
 
-  // Subtle animated grid
-  ctx.strokeStyle = tc.playerGlow;
-  ctx.lineWidth = 1;
-  ctx.globalAlpha = 0.035;
-  const offset = (game.frameCount * 0.4) % 40;
-  for (let x = 0; x <= CANVAS_W; x += 40) {
-    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, CANVAS_H); ctx.stroke();
-  }
-  for (let y = offset; y <= CANVAS_H; y += 40) {
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(CANVAS_W, y); ctx.stroke();
-  }
-  ctx.globalAlpha = 1;
-
-  // Stars
   for (const s of game.stars) {
     ctx.fillStyle = s.layer === 0 ? tc.bulletGlow : s.layer === 1 ? tc.playerGlow : '#ffffff';
     ctx.globalAlpha = s.brightness * (0.6 + 0.4 * Math.sin(game.frameCount * 0.02 + s.x));
@@ -236,59 +384,117 @@ function drawThemeBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: 
 }
 
 
+
 // ---------- SLEEK PLAYER SHIP RENDERERS ----------
 
 function drawSpiderPlayer(ctx: CanvasRenderingContext2D, p: Player, fc: number, tc: ThemeColors) {
+  const w = p.width, h = p.height;
+  const pulse = 0.5 + 0.5 * Math.sin(fc * 0.12);
+
+  // swept red hull
   ctx.fillStyle = tc.player;
   ctx.beginPath();
-  ctx.moveTo(0, -p.height / 2);
-  ctx.lineTo(-p.width / 2, p.height / 2);
-  ctx.lineTo(-p.width / 4, p.height / 3);
-  ctx.lineTo(0, p.height / 2.5);
-  ctx.lineTo(p.width / 4, p.height / 3);
-  ctx.lineTo(p.width / 2, p.height / 2);
+  ctx.moveTo(0, -h / 2 - 3);
+  ctx.lineTo(w * 0.2, -h * 0.12);
+  ctx.lineTo(w * 0.52, h * 0.42);
+  ctx.lineTo(w * 0.22, h * 0.3);
+  ctx.lineTo(0, h * 0.46);
+  ctx.lineTo(-w * 0.22, h * 0.3);
+  ctx.lineTo(-w * 0.52, h * 0.42);
+  ctx.lineTo(-w * 0.2, -h * 0.12);
   ctx.closePath();
   ctx.fill();
 
+  // dark web-blue mask panel
+  ctx.fillStyle = '#0d1b4c';
+  ctx.beginPath();
+  ctx.moveTo(0, -h * 0.34);
+  ctx.lineTo(w * 0.17, h * 0.06);
+  ctx.lineTo(0, h * 0.2);
+  ctx.lineTo(-w * 0.17, h * 0.06);
+  ctx.closePath();
+  ctx.fill();
+
+  // web lines across the hull
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.lineWidth = 0.8;
+  for (const dir of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(0, -h * 0.4);
+    ctx.lineTo(dir * w * 0.42, h * 0.34);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(-w * 0.3, h * 0.1);
+  ctx.lineTo(w * 0.3, h * 0.1);
+  ctx.stroke();
+  ctx.lineWidth = 1;
+
+  // eye lenses
   ctx.fillStyle = tc.playerGlow;
-  ctx.beginPath();
-  ctx.moveTo(0, -p.height / 3);
-  ctx.lineTo(-p.width / 3, p.height / 4);
-  ctx.lineTo(p.width / 3, p.height / 4);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.arc(0, -2, 4, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.globalAlpha = 0.7 + 0.3 * pulse;
+  for (const dir of [-1, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(dir * w * 0.09, -h * 0.16, 3.2, 4.4, dir * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 }
 
 function drawIronManPlayer(ctx: CanvasRenderingContext2D, p: Player, fc: number, tc: ThemeColors) {
+  const w = p.width, h = p.height;
+  const pulse = 0.5 + 0.5 * Math.sin(fc * 0.16);
+
+  // crimson under-wings
+  ctx.fillStyle = tc.playerGlow;
+  for (const dir of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(dir * w * 0.12, -h * 0.2);
+    ctx.lineTo(dir * (w * 0.62 + 4), h * 0.22);
+    ctx.lineTo(dir * w * 0.28, h * 0.46);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // gold armour hull
   ctx.fillStyle = tc.player;
   ctx.beginPath();
-  ctx.moveTo(0, -p.height / 2 - 2);
-  ctx.lineTo(-p.width / 2 - 4, p.height / 4);
-  ctx.lineTo(-p.width / 3, p.height / 2);
-  ctx.lineTo(0, p.height / 3);
-  ctx.lineTo(p.width / 3, p.height / 2);
-  ctx.lineTo(p.width / 2 + 4, p.height / 4);
+  ctx.moveTo(0, -h / 2 - 4);
+  ctx.lineTo(w * 0.24, -h * 0.06);
+  ctx.lineTo(w * 0.3, h * 0.34);
+  ctx.lineTo(0, h * 0.2);
+  ctx.lineTo(-w * 0.3, h * 0.34);
+  ctx.lineTo(-w * 0.24, -h * 0.06);
   ctx.closePath();
   ctx.fill();
 
-  ctx.fillStyle = tc.playerGlow;
+  // faceplate slit
+  ctx.fillStyle = '#2b0910';
+  ctx.fillRect(-w * 0.13, -h * 0.3, w * 0.26, 3);
+
+  // arc reactor
+  ctx.fillStyle = tc.bulletGlow;
+  ctx.globalAlpha = 0.5 + 0.4 * pulse;
   ctx.beginPath();
-  ctx.moveTo(0, -p.height / 2);
-  ctx.lineTo(-p.width / 4, p.height / 3);
-  ctx.lineTo(p.width / 4, p.height / 3);
-  ctx.closePath();
+  ctx.arc(0, -h * 0.02, 6.5 + pulse * 2, 0, Math.PI * 2);
   ctx.fill();
-
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
-  ctx.arc(0, -2, 4.5, 0, Math.PI * 2);
+  ctx.arc(0, -h * 0.02, 3, 0, Math.PI * 2);
   ctx.fill();
+
+  // repulsor thrusters
+  ctx.fillStyle = tc.missile;
+  ctx.globalAlpha = 0.55 + 0.35 * pulse;
+  for (const dir of [-1, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(dir * w * 0.2, h * 0.42, 2.6, 6 + pulse * 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 }
+
 
 function drawThorPlayer(ctx: CanvasRenderingContext2D, p: Player, fc: number, tc: ThemeColors) {
   const w = p.width, h = p.height;
@@ -611,11 +817,41 @@ export function renderGame(
       ctx.lineWidth = 1;
       continue;
     }
+    if (game.theme === 'spiderman' && !b.homing) {
+      // web-shot: white capsule with a spun web halo
+      ctx.fillStyle = b.color || tc.bullet;
+      ctx.beginPath();
+      ctx.ellipse(b.x, b.y, b.width * 0.7, b.height * 0.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.moveTo(b.x - b.width, b.y);
+      ctx.lineTo(b.x + b.width, b.y);
+      ctx.moveTo(b.x, b.y - b.height * 0.7);
+      ctx.lineTo(b.x, b.y + b.height * 0.7);
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      continue;
+    }
+    if (game.theme === 'ironman' && !b.homing) {
+      // repulsor pulse
+      ctx.fillStyle = b.color || tc.bullet;
+      ctx.beginPath();
+      ctx.ellipse(b.x, b.y, b.width * 0.55, b.height * 0.62, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, Math.max(1, b.width * 0.28), 0, Math.PI * 2);
+      ctx.fill();
+      continue;
+    }
     ctx.fillStyle = b.color || tc.bullet;
     ctx.fillRect(b.x - b.width / 2, b.y - b.height / 2, b.width, b.height);
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(b.x - 1, b.y - b.height / 2, 2, b.height);
   }
+
 
 
   // Enemy bullets
