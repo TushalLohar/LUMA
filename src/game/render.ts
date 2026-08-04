@@ -149,7 +149,7 @@ function drawStormBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: 
   // far storm clouds
   for (let b = 0; b < 4; b++) {
     const y = ((fc * 0.14 + b * (CANVAS_H / 4)) % (CANVAS_H + 140)) - 70;
-    drawCloudBand(ctx, b * 11 + 3, y, 1.5, 0.2, '#2b4a76');
+    drawCloudBand(ctx, b * 11 + 3, y, 1.5, 0.14, '#2b4a76');
   }
 
   // floating temples (mid background)
@@ -162,7 +162,7 @@ function drawStormBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: 
   // near clouds
   for (let b = 0; b < 3; b++) {
     const y = ((fc * 0.42 + b * (CANVAS_H / 3)) % (CANVAS_H + 160)) - 80;
-    drawCloudBand(ctx, 200 + b * 17, y, 2.1, 0.16, '#1b4b7d');
+    drawCloudBand(ctx, 200 + b * 17, y, 2.1, 0.1, '#1b4b7d');
   }
 
   // rain streaks
