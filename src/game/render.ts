@@ -291,30 +291,70 @@ function drawIronManPlayer(ctx: CanvasRenderingContext2D, p: Player, fc: number,
 }
 
 function drawThorPlayer(ctx: CanvasRenderingContext2D, p: Player, fc: number, tc: ThemeColors) {
+  const w = p.width, h = p.height;
+  const pulse = 0.5 + 0.5 * Math.sin(fc * 0.14);
+
+  // outer wing blades (divine sky weapon)
+  ctx.fillStyle = '#F6C343';
+  for (const dir of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(dir * w * 0.16, -h * 0.34);
+    ctx.lineTo(dir * (w * 0.62 + 7), -h * 0.05);
+    ctx.lineTo(dir * (w * 0.52 + 4), h * 0.3);
+    ctx.lineTo(dir * w * 0.2, h * 0.12);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // inner wing plating
+  ctx.fillStyle = '#D8E5F0';
+  for (const dir of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(dir * w * 0.1, -h * 0.42);
+    ctx.lineTo(dir * w * 0.42, h * 0.02);
+    ctx.lineTo(dir * w * 0.16, h * 0.3);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // central hull
   ctx.fillStyle = tc.player;
   ctx.beginPath();
-  ctx.moveTo(0, -p.height / 2 - 4);
-  ctx.lineTo(-p.width / 2 - 6, p.height / 4);
-  ctx.lineTo(-p.width / 4, p.height / 2);
-  ctx.lineTo(0, p.height / 3);
-  ctx.lineTo(p.width / 4, p.height / 2);
-  ctx.lineTo(p.width / 2 + 6, p.height / 4);
+  ctx.moveTo(0, -h / 2 - 5);
+  ctx.lineTo(w * 0.16, -h * 0.1);
+  ctx.lineTo(w * 0.1, h * 0.42);
+  ctx.lineTo(0, h * 0.3);
+  ctx.lineTo(-w * 0.1, h * 0.42);
+  ctx.lineTo(-w * 0.16, -h * 0.1);
   ctx.closePath();
   ctx.fill();
 
-  ctx.fillStyle = '#e2e8f0';
+  // energy core
+  ctx.fillStyle = '#69F0FF';
+  ctx.globalAlpha = 0.55 + 0.35 * pulse;
   ctx.beginPath();
-  ctx.moveTo(0, -p.height / 2);
-  ctx.lineTo(-p.width / 4, p.height / 3);
-  ctx.lineTo(p.width / 4, p.height / 3);
-  ctx.closePath();
+  ctx.arc(0, -1, 6 + pulse * 2, 0, Math.PI * 2);
   ctx.fill();
-
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
-  ctx.arc(0, -2, 4, 0, Math.PI * 2);
+  ctx.arc(0, -1, 3, 0, Math.PI * 2);
   ctx.fill();
+
+  // thunder-stream propulsion bolt
+  ctx.strokeStyle = '#69F0FF';
+  ctx.lineWidth = 2;
+  ctx.globalAlpha = 0.5 + 0.4 * pulse;
+  ctx.beginPath();
+  ctx.moveTo(0, h * 0.4);
+  ctx.lineTo(-3, h * 0.58);
+  ctx.lineTo(2, h * 0.62);
+  ctx.lineTo(-1, h * 0.86);
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+  ctx.lineWidth = 1;
 }
+
 
 // ---------- SLEEK HIGH-TECH ENEMY RENDERERS ----------
 
