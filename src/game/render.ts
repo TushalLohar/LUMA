@@ -388,56 +388,113 @@ function drawThemeBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: 
 // ---------- SLEEK PLAYER SHIP RENDERERS ----------
 
 function drawSpiderPlayer(ctx: CanvasRenderingContext2D, p: Player, fc: number, tc: ThemeColors) {
+  const w = p.width, h = p.height;
+  const pulse = 0.5 + 0.5 * Math.sin(fc * 0.12);
+
+  // swept red hull
   ctx.fillStyle = tc.player;
   ctx.beginPath();
-  ctx.moveTo(0, -p.height / 2);
-  ctx.lineTo(-p.width / 2, p.height / 2);
-  ctx.lineTo(-p.width / 4, p.height / 3);
-  ctx.lineTo(0, p.height / 2.5);
-  ctx.lineTo(p.width / 4, p.height / 3);
-  ctx.lineTo(p.width / 2, p.height / 2);
+  ctx.moveTo(0, -h / 2 - 3);
+  ctx.lineTo(w * 0.2, -h * 0.12);
+  ctx.lineTo(w * 0.52, h * 0.42);
+  ctx.lineTo(w * 0.22, h * 0.3);
+  ctx.lineTo(0, h * 0.46);
+  ctx.lineTo(-w * 0.22, h * 0.3);
+  ctx.lineTo(-w * 0.52, h * 0.42);
+  ctx.lineTo(-w * 0.2, -h * 0.12);
   ctx.closePath();
   ctx.fill();
 
+  // dark web-blue mask panel
+  ctx.fillStyle = '#0d1b4c';
+  ctx.beginPath();
+  ctx.moveTo(0, -h * 0.34);
+  ctx.lineTo(w * 0.17, h * 0.06);
+  ctx.lineTo(0, h * 0.2);
+  ctx.lineTo(-w * 0.17, h * 0.06);
+  ctx.closePath();
+  ctx.fill();
+
+  // web lines across the hull
+  ctx.strokeStyle = 'rgba(255,255,255,0.35)';
+  ctx.lineWidth = 0.8;
+  for (const dir of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(0, -h * 0.4);
+    ctx.lineTo(dir * w * 0.42, h * 0.34);
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  ctx.moveTo(-w * 0.3, h * 0.1);
+  ctx.lineTo(w * 0.3, h * 0.1);
+  ctx.stroke();
+  ctx.lineWidth = 1;
+
+  // eye lenses
   ctx.fillStyle = tc.playerGlow;
-  ctx.beginPath();
-  ctx.moveTo(0, -p.height / 3);
-  ctx.lineTo(-p.width / 3, p.height / 4);
-  ctx.lineTo(p.width / 3, p.height / 4);
-  ctx.closePath();
-  ctx.fill();
-
-  ctx.fillStyle = '#ffffff';
-  ctx.beginPath();
-  ctx.arc(0, -2, 4, 0, Math.PI * 2);
-  ctx.fill();
+  ctx.globalAlpha = 0.7 + 0.3 * pulse;
+  for (const dir of [-1, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(dir * w * 0.09, -h * 0.16, 3.2, 4.4, dir * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 }
 
 function drawIronManPlayer(ctx: CanvasRenderingContext2D, p: Player, fc: number, tc: ThemeColors) {
+  const w = p.width, h = p.height;
+  const pulse = 0.5 + 0.5 * Math.sin(fc * 0.16);
+
+  // crimson under-wings
+  ctx.fillStyle = tc.playerGlow;
+  for (const dir of [-1, 1]) {
+    ctx.beginPath();
+    ctx.moveTo(dir * w * 0.12, -h * 0.2);
+    ctx.lineTo(dir * (w * 0.62 + 4), h * 0.22);
+    ctx.lineTo(dir * w * 0.28, h * 0.46);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // gold armour hull
   ctx.fillStyle = tc.player;
   ctx.beginPath();
-  ctx.moveTo(0, -p.height / 2 - 2);
-  ctx.lineTo(-p.width / 2 - 4, p.height / 4);
-  ctx.lineTo(-p.width / 3, p.height / 2);
-  ctx.lineTo(0, p.height / 3);
-  ctx.lineTo(p.width / 3, p.height / 2);
-  ctx.lineTo(p.width / 2 + 4, p.height / 4);
+  ctx.moveTo(0, -h / 2 - 4);
+  ctx.lineTo(w * 0.24, -h * 0.06);
+  ctx.lineTo(w * 0.3, h * 0.34);
+  ctx.lineTo(0, h * 0.2);
+  ctx.lineTo(-w * 0.3, h * 0.34);
+  ctx.lineTo(-w * 0.24, -h * 0.06);
   ctx.closePath();
   ctx.fill();
 
-  ctx.fillStyle = tc.playerGlow;
+  // faceplate slit
+  ctx.fillStyle = '#2b0910';
+  ctx.fillRect(-w * 0.13, -h * 0.3, w * 0.26, 3);
+
+  // arc reactor
+  ctx.fillStyle = tc.bulletGlow;
+  ctx.globalAlpha = 0.5 + 0.4 * pulse;
   ctx.beginPath();
-  ctx.moveTo(0, -p.height / 2);
-  ctx.lineTo(-p.width / 4, p.height / 3);
-  ctx.lineTo(p.width / 4, p.height / 3);
-  ctx.closePath();
+  ctx.arc(0, -h * 0.02, 6.5 + pulse * 2, 0, Math.PI * 2);
   ctx.fill();
-
+  ctx.globalAlpha = 1;
   ctx.fillStyle = '#ffffff';
   ctx.beginPath();
-  ctx.arc(0, -2, 4.5, 0, Math.PI * 2);
+  ctx.arc(0, -h * 0.02, 3, 0, Math.PI * 2);
   ctx.fill();
+
+  // repulsor thrusters
+  ctx.fillStyle = tc.missile;
+  ctx.globalAlpha = 0.55 + 0.35 * pulse;
+  for (const dir of [-1, 1]) {
+    ctx.beginPath();
+    ctx.ellipse(dir * w * 0.2, h * 0.42, 2.6, 6 + pulse * 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
 }
+
 
 function drawThorPlayer(ctx: CanvasRenderingContext2D, p: Player, fc: number, tc: ThemeColors) {
   const w = p.width, h = p.height;
