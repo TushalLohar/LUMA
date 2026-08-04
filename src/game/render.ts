@@ -141,7 +141,7 @@ function drawStormBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: 
   const fc = game.frameCount;
   const bgGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
   bgGrad.addColorStop(0, tc.bgGradTop);
-  bgGrad.addColorStop(0.55, '#071734');
+  bgGrad.addColorStop(0.55, '#0a2244');
   bgGrad.addColorStop(1, tc.bgGradBottom);
   ctx.fillStyle = bgGrad;
   ctx.fillRect(-12, -12, CANVAS_W + 24, CANVAS_H + 24);
@@ -149,20 +149,20 @@ function drawStormBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: 
   // far storm clouds
   for (let b = 0; b < 4; b++) {
     const y = ((fc * 0.14 + b * (CANVAS_H / 4)) % (CANVAS_H + 140)) - 70;
-    drawCloudBand(ctx, b * 11 + 3, y, 1.5, 0.1, '#2b4a76');
+    drawCloudBand(ctx, b * 11 + 3, y, 1.5, 0.2, '#2b4a76');
   }
 
   // floating temples (mid background)
   for (let t = 0; t < 3; t++) {
     const y = ((fc * 0.22 + t * (CANVAS_H / 3)) % (CANVAS_H + 220)) - 110;
     const x = 40 + hash(t * 7.3) * (CANVAS_W - 80);
-    drawTemple(ctx, x, y, 66 + hash(t * 3.1) * 44, 0.5);
+    drawTemple(ctx, x, y, 66 + hash(t * 3.1) * 44, 0.75);
   }
 
   // near clouds
   for (let b = 0; b < 3; b++) {
     const y = ((fc * 0.42 + b * (CANVAS_H / 3)) % (CANVAS_H + 160)) - 80;
-    drawCloudBand(ctx, 200 + b * 17, y, 2.1, 0.08, '#123a63');
+    drawCloudBand(ctx, 200 + b * 17, y, 2.1, 0.16, '#1b4b7d');
   }
 
   // rain streaks
