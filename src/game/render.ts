@@ -594,12 +594,29 @@ export function renderGame(
   }
 
   // Player bullets
+  const stormShots = game.theme === 'thor';
   for (const b of game.bullets) {
+    if (stormShots && !b.homing) {
+      // lightning-bolt shot
+      const half = b.height / 2;
+      const j = ((b.y | 0) % 2 === 0 ? 1 : -1) * (b.width * 0.6);
+      ctx.strokeStyle = b.color || tc.bullet;
+      ctx.lineWidth = Math.max(1.5, b.width * 0.8);
+      ctx.beginPath();
+      ctx.moveTo(b.x, b.y - half);
+      ctx.lineTo(b.x + j, b.y - half * 0.3);
+      ctx.lineTo(b.x - j, b.y + half * 0.3);
+      ctx.lineTo(b.x, b.y + half);
+      ctx.stroke();
+      ctx.lineWidth = 1;
+      continue;
+    }
     ctx.fillStyle = b.color || tc.bullet;
     ctx.fillRect(b.x - b.width / 2, b.y - b.height / 2, b.width, b.height);
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(b.x - 1, b.y - b.height / 2, 2, b.height);
   }
+
 
   // Enemy bullets
   for (const b of game.enemyBullets) {
