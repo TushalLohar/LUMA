@@ -32,4 +32,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
+# Lovable metadata
+.lovable
+.lovable/
