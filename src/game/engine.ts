@@ -187,7 +187,7 @@ function createPlayer(): Player {
     width: 32,
     height: 36,
     speed: 5,
-    hp: 3,
+    hp: 5,
     maxHp: 5,
     fireRate: 9,
     fireTimer: 0,

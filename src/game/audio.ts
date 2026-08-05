@@ -150,7 +150,7 @@ export function startMusic() {
   if (!ctx) return;
   musicStep = 0;
   musicInterval = window.setInterval(() => {
-    if (loadMuted()) return;
+    if (muted) return;
     const bass = bassLine[musicStep % bassLine.length];
     if (bass) playTone(bass, 0.16, 'triangle', 0.045);
     if (musicStep % 2 === 0) {

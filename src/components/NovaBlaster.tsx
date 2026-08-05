@@ -47,7 +47,7 @@ export default function NovaBlaster() {
   const accRef = useRef<number>(0);
   const prevBulletCount = useRef(0);
   const prevKillCount = useRef(0);
-  const prevPlayerHp = useRef(3);
+  const prevPlayerHp = useRef(5);
   const prevPowerUpCount = useRef(0);
   const prevState = useRef<string>("menu");
   const prevBossWarning = useRef(0);

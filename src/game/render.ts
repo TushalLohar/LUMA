@@ -5,6 +5,24 @@ import { isMuted } from './audio';
 // ---------- pre-rendered glow sprites (big perf win vs per-frame gradients) ----------
 const glowCache = new Map<string, HTMLCanvasElement>();
 
+// ---------- cached gradient + allocation hoists (reduce GC pressure) ----------
+let bgGradCache: { theme: string; grad: CanvasGradient } | null = null;
+let stormGradCache: { grad: CanvasGradient } | null = null;
+
+const POWERUP_ICONS: Record<PowerUpType, string> = {
+  spread: 'S', rapid: 'R', shield: '◆', bomb: 'B',
+  health: '+', missile: 'M', laser: 'L', magnet: 'U', scoreMultiplier: '2X',
+};
+
+const THEME_PILLS: { id: 'spiderman' | 'ironman' | 'thor'; label: string; icon: string }[] = [
+  { id: 'spiderman', label: 'SPIDEY', icon: '🕸️' },
+  { id: 'ironman', label: 'IRON MAN', icon: '🤖' },
+  { id: 'thor', label: 'THOR', icon: '⚡' },
+];
+
+let lastFormattedScore = -1;
+let formattedScoreStr = '0';
+
 function hexToRgb(hex: string): [number, number, number] {
   const n = parseInt(hex.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
@@ -139,11 +157,14 @@ function drawBolt(
 
 function drawStormBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: ThemeColors) {
   const fc = game.frameCount;
-  const bgGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
-  bgGrad.addColorStop(0, tc.bgGradTop);
-  bgGrad.addColorStop(0.55, '#0a2244');
-  bgGrad.addColorStop(1, tc.bgGradBottom);
-  ctx.fillStyle = bgGrad;
+  if (!stormGradCache) {
+    const g = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+    g.addColorStop(0, tc.bgGradTop);
+    g.addColorStop(0.55, '#0a2244');
+    g.addColorStop(1, tc.bgGradBottom);
+    stormGradCache = { grad: g };
+  }
+  ctx.fillStyle = stormGradCache.grad;
   ctx.fillRect(-12, -12, CANVAS_W + 24, CANVAS_H + 24);
 
   // far storm clouds
@@ -207,10 +228,13 @@ function drawThemeBackground(ctx: CanvasRenderingContext2D, game: GameData, tc: 
     return;
   }
 
-  const bgGrad = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
-  bgGrad.addColorStop(0, tc.bgGradTop);
-  bgGrad.addColorStop(1, tc.bgGradBottom);
-  ctx.fillStyle = bgGrad;
+  if (!bgGradCache || bgGradCache.theme !== game.theme) {
+    const g = ctx.createLinearGradient(0, 0, 0, CANVAS_H);
+    g.addColorStop(0, tc.bgGradTop);
+    g.addColorStop(1, tc.bgGradBottom);
+    bgGradCache = { theme: game.theme, grad: g };
+  }
+  ctx.fillStyle = bgGradCache.grad;
   ctx.fillRect(-12, -12, CANVAS_W + 24, CANVAS_H + 24);
 
   // Subtle animated grid
@@ -589,8 +613,7 @@ export function renderGame(
     ctx.font = 'bold 12px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    const icons: Record<PowerUpType, string> = { spread: 'S', rapid: 'R', shield: '◆', bomb: 'B', health: '+', missile: 'M', laser: 'L', magnet: 'U', scoreMultiplier: '2X' };
-    ctx.fillText(icons[pw.type], pw.x, pw.y);
+    ctx.fillText(POWERUP_ICONS[pw.type], pw.x, pw.y);
   }
 
   // Player bullets
@@ -783,10 +806,10 @@ export function renderGame(
     ctx.font = 'bold 16px monospace';
     ctx.fillText('HIGH SCORES', CANVAS_W / 2, 355);
     ctx.font = '13px monospace';
-    const displayScores = game.highScores.slice(0, 5);
-    for (let i = 0; i < displayScores.length; i++) {
+    const displayLen = Math.min(game.highScores.length, 5);
+    for (let i = 0; i < displayLen; i++) {
       ctx.fillStyle = i === 0 ? tc.bulletGlow : i === 1 ? '#c0c0c0' : i === 2 ? '#cd7f32' : '#888';
-      ctx.fillText(`${i + 1}.  ${displayScores[i]!.toLocaleString()}`, CANVAS_W / 2, 380 + i * 20);
+      ctx.fillText(`${i + 1}.  ${game.highScores[i]!.toLocaleString()}`, CANVAS_W / 2, 380 + i * 20);
     }
 
     if (Math.sin(game.frameCount * 0.08) > 0) {
@@ -811,7 +834,11 @@ function renderHUD(ctx: CanvasRenderingContext2D, game: GameData) {
   ctx.font = 'bold 22px monospace';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
-  ctx.fillText(game.score.toLocaleString(), 12, 30);
+  if (game.score !== lastFormattedScore) {
+    lastFormattedScore = game.score;
+    formattedScoreStr = game.score.toLocaleString();
+  }
+  ctx.fillText(formattedScoreStr, 12, 30);
 
   // Combo
   if (game.combo > 1) {
@@ -894,17 +921,13 @@ function renderThemeSelector(ctx: CanvasRenderingContext2D, game: GameData, yY: 
   ctx.fillStyle = '#94a3b8';
   ctx.fillText('SELECT HERO THEME', CANVAS_W / 2, yY - 18);
 
-  const themes: { id: 'spiderman' | 'ironman' | 'thor'; label: string; icon: string }[] = [
-    { id: 'spiderman', label: 'SPIDEY', icon: '🕸️' },
-    { id: 'ironman', label: 'IRON MAN', icon: '🤖' },
-    { id: 'thor', label: 'THOR', icon: '⚡' },
-  ];
+
 
   const pillW = 120;
   const pillH = 36;
   const startX = CANVAS_W / 2 - pillW * 1.5 - 10;
 
-  themes.forEach((t, index) => {
+  THEME_PILLS.forEach((t, index) => {
     const x = startX + index * (pillW + 10);
     const active = game.theme === t.id;
     const tc = THEME_CONFIGS[t.id];

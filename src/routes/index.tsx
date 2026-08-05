@@ -13,10 +13,10 @@ export const Route = createFileRoute("/")({
       { property: "og:title", content: title },
       { property: "og:description", content: description },
       { property: "og:type", content: "website" },
-      { property: "og:url", content: "https://play-muse-machine.lovable.app/" },
+      { property: "og:url", content: "https://luma-arcade.lovable.app/" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
-    links: [{ rel: "canonical", href: "https://play-muse-machine.lovable.app/" }],
+    links: [{ rel: "canonical", href: "https://luma-arcade.lovable.app/" }],
     scripts: [
       {
         type: "application/ld+json",
@@ -25,7 +25,7 @@ export const Route = createFileRoute("/")({
           "@type": "VideoGame",
           name: "NOVA BLASTER",
           description,
-          url: "https://play-muse-machine.lovable.app/",
+          url: "https://luma-arcade.lovable.app/",
           genre: ["Arcade", "Shoot 'em up"],
           playMode: "SinglePlayer",
           applicationCategory: "Game",
